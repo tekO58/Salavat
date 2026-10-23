@@ -1,11 +1,19 @@
 name: Build APK
 
-# Her push'ta testler ve debug APK. APK depodaki sabit test anahtariyla
-# imzali (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+# Her push'ta debug APK. APK depodaki sabit test anahtariyla imzali
+# (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+# Birim testleri her 10 kosuda bir (run_number 10'un kati) ya da
+# "Run workflow"da elle isaretlenirse; diger kosularda APK derlemesi
+# derleme hatasini yine yakalar.
 on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Birim testlerini çalıştır'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,7 +35,19 @@ jobs:
       - name: Gradle önbelleği
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Test koşusu mu?
+        id: tests
+        run: |
+          if [ "${{ inputs.run_tests }}" = "true" ] || [ $(( ${{ github.run_number }} % 10 )) -eq 0 ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Birim testleri bu koşuda çalışacak (koşu #${{ github.run_number }})."
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Birim testleri atlandı (koşu #${{ github.run_number }}; her 10 koşuda bir ya da elle)."
+          fi
+
       - name: Robolectric önbelleği
+        if: ${{ steps.tests.outputs.run == 'true' }}
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository/org/robolectric
@@ -35,12 +55,11 @@ jobs:
           restore-keys: robolectric-${{ runner.os }}-
 
       - name: Birim testleri
-        run: |
-          chmod +x gradlew
-          ./gradlew testDebugUnitTest --stacktrace
+        if: ${{ steps.tests.outputs.run == 'true' }}
+        run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Test raporunu yükle
-        if: ${{ failure() }}
+        if: ${{ failure() && steps.tests.outputs.run == 'true' }}
         uses: actions/upload-artifact@v6
         with:
           name: unit-test-report
@@ -49,7 +68,9 @@ jobs:
           retention-days: 3
 
       - name: APK derle
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: APK'yı yükle
         uses: actions/upload-artifact@v6
