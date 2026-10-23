@@ -480,7 +480,7 @@ function entryPage(id) {
         : fold('arabic', 'Arapça', h('div.warn', null, 'Arapça bekliyor' + (e.user ? ' · bulunca ⋮ → Düzenle ile ekle.' : '.'))),
       e.reading ? fold('reading', 'Okunuşu', h('div.reading-text', null, e.reading)) : null,
       e.meaning ? fold('meaning', 'Anlamı', h('div.meaning-text.sec', null, e.meaning)) : null,
-      origin ? card('Kaynak', h('div.sec', { style: { fontSize: '13.5px', whiteSpace: 'pre-line' } }, origin)) : null,
+      origin ? fold('source', 'Kaynak', h('div.sec', { style: { fontSize: '13.5px', whiteSpace: 'pre-line' } }, origin)) : null,
       !e.verified && !e.user ? h('p.warn', { style: { fontSize: '12.5px' } }, '⚠ Bu metin henüz ikinci bir kaynakla harf harf karşılaştırılmadı.') : null),
     h('div.bottom-bar', null, stats, targets,
       h('button.primary', { onclick: () => { tasbihFor(e); go('#/c/' + e.id); }, style: { background: s ? s.color : 'var(--accent)' } }, '📿  Tespihle oku'))));
