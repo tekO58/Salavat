@@ -179,8 +179,28 @@ function h(tag, props, ...kids) {
   return el;
 }
 const num = (n) => Number(n || 0).toLocaleString('tr-TR');
-const go = (hash) => { location.hash = hash; };
-const back = () => (history.length > 1 ? history.back() : go('#/'));
+
+/*
+ * Yonlendirme. Normalde adres cubugundaki #/... kullanilir. Gomulu modda
+ * (window.SALAVAT_EMBED: tek dosyalik claude.ai sayfasi) adres degistirilemez;
+ * sayfa gecmisi bellekte tutulur.
+ */
+const EMBED = !!window.SALAVAT_EMBED;
+const stack = ['#/'];
+const route = () => (EMBED ? stack[stack.length - 1] : location.hash || '#/');
+function go(hash) {
+  if (EMBED) { stack.push(hash); render(); } else location.hash = hash;
+}
+function replaceRoute(hash, rerender) {
+  if (EMBED) { stack[stack.length - 1] = hash; if (rerender) render(); }
+  else if (rerender) location.replace(hash);
+  else history.replaceState(null, '', hash);
+}
+function back() {
+  if (EMBED) { if (stack.length > 1) stack.pop(); render(); }
+  else if (history.length > 1) history.back();
+  else go('#/');
+}
 const app = document.getElementById('app');
 
 function mix(hex, base, ratio) {
@@ -354,9 +374,9 @@ function sectionPage(filter) {
     const s = sectionOf(filter);
     titleEl.textContent = filter === '_all' ? 'Tümü' : filter === '_fav' ? 'Favoriler' : s ? `${s.icon}  ${s.name}` : 'Tümü';
     chipsEl.replaceChildren(
-      chip('Tümü', filter === '_all', null, () => { filter = '_all'; history.replaceState(null, '', '#/s/_all'); renderTop(); }),
-      chip('★', filter === '_fav', null, () => { filter = '_fav'; history.replaceState(null, '', '#/s/_fav'); renderTop(); }),
-      ...sections().map((x) => chip(x.name, filter === x.id, x.color, () => { filter = x.id; history.replaceState(null, '', '#/s/' + x.id); renderTop(); })));
+      chip('Tümü', filter === '_all', null, () => { filter = '_all'; replaceRoute('#/s/_all'); renderTop(); }),
+      chip('★', filter === '_fav', null, () => { filter = '_fav'; replaceRoute('#/s/_fav'); renderTop(); }),
+      ...sections().map((x) => chip(x.name, filter === x.id, x.color, () => { filter = x.id; replaceRoute('#/s/' + x.id); renderTop(); })));
     renderList();
   }
 
@@ -521,7 +541,7 @@ function addPage(params) {
     if (t && e.target > 0) { t.target = e.target; t.count = Math.min(t.count, e.target); }
     save();
     toast(editing ? 'Kaydedildi' : 'Eklendi');
-    if (editing) back(); else location.replace('#/e/' + e.id);
+    if (editing) back(); else replaceRoute('#/e/' + e.id, true);
   }
 
   const lbl = (text) => h('label.field-label', null, text);
@@ -529,8 +549,10 @@ function addPage(params) {
     h('div.head', null, h('button.icon-btn.back', { onclick: back }, '‹'), h('div.title', null, editing ? 'Düzenle' : 'Yapıştır ve ekle')),
     h('div.scroll', null,
       editing ? null : [h('div.label', null, '1 · İnternetten kopyaladığın metin'), paste,
+        // Gomulu sayfada pano okunamiyor: kutuya uzun basip Yapistir (yapistirinca kendiliginden ayrilir).
         h('div.row.mt8', { style: { gap: '8px' } },
-          h('button.secondary.grow', { onclick: fromClipboard }, '📋  Panodan yapıştır'),
+          EMBED ? h('p.muted.grow', { style: { fontSize: '12.5px' } }, 'Kutuya uzun bas → Yapıştır. Metin kendiliğinden ayrılır.')
+            : h('button.secondary.grow', { onclick: fromClipboard }, '📋  Panodan yapıştır'),
           h('button.secondary.grow', { onclick: () => split(paste.value) }, 'Ayır  ↓'))],
       h('div.row', { style: { marginTop: editing ? '4px' : '18px' } }, h('div.label.grow', null, editing ? 'Metin' : '2 · Kontrol et, gerekirse düzelt'), tag),
       lbl('AD'), f.name, lbl('ARAPÇA'), f.arabic, lbl('OKUNUŞ'), f.reading, lbl('ANLAM'), f.meaning, lbl('KAYNAK'), f.source,
@@ -538,7 +560,7 @@ function addPage(params) {
       h('div.label', { style: { marginTop: '18px', marginBottom: '8px' } }, editing ? 'Bölüm ve okuma sayısı' : '3 · Bölüm ve okuma sayısı'),
       sectionChips, targetChips),
     h('div.bottom-bar', null, h('button.primary', { onclick: saveEntry, style: { marginTop: 0 } }, 'Kaydet'))));
-  if (!editing && params.get('paste')) fromClipboard();
+  if (!editing && params.get('paste')) { if (EMBED) paste.focus(); else fromClipboard(); }
 }
 
 /* --------------------------------------------------------------- tespih */
@@ -703,7 +725,7 @@ function applySizes() {
 
 function render() {
   document.querySelectorAll('.overlay').forEach((o) => o.remove());
-  const [path, query] = location.hash.replace(/^#\/?/, '').split('?');
+  const [path, query] = route().replace(/^#\/?/, '').split('?');
   const [page, arg] = path.split('/');
   const params = new URLSearchParams(query || '');
   if (page !== 'c') keepAwake(false);
@@ -716,12 +738,13 @@ function render() {
   else home();
 }
 
-window.addEventListener('hashchange', render);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && location.hash.startsWith('#/c/')) keepAwake(true); });
+if (!EMBED) window.addEventListener('hashchange', render);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && route().startsWith('#/c/')) keepAwake(true); });
 
-fetch('salavat.json').then((r) => r.json()).then((data) => {
+// Gomulu sayfada hazir kayitlar sayfanin icinde (SALAVAT_DATA), normalde salavat.json.
+(window.SALAVAT_DATA ? Promise.resolve(window.SALAVAT_DATA) : fetch('salavat.json').then((r) => r.json())).then((data) => {
   builtin = data.filter((e) => e.id && e.name && (e.arabic || e.reading || e.meaning))
     .map((e) => Object.assign({ section: 'salavat', target: 100, aka: '', arabic: '', reading: '', meaning: '', attribution: '', source: '', note: '' }, e, { user: false }));
 }).catch(() => toast('Hazır kayıtlar yüklenemedi')).finally(render);
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if (!EMBED && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
