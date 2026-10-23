@@ -17,9 +17,11 @@ object AppColors {
     val BG_APP = c("#12172B")
     val BG_CARD = c("#151D32")
     val BG_FIELD = c("#0E1526")
+    val BG_ELEVATED = c("#1A2440")
 
     // Cizgiler
     val STROKE = c("#26314D")
+    val STROKE_STRONG = c("#333A55")
 
     // Metin
     val TEXT_PRIMARY = c("#F2EFE6")

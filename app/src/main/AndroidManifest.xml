@@ -12,7 +12,7 @@
         android:theme="@style/Theme.Salavat">
 
         <activity
-            android:name=".SalavatListActivity"
+            android:name=".HomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,7 +20,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".SalavatActivity" android:exported="false" />
+        <activity android:name=".SectionActivity" android:exported="false" />
+        <activity android:name=".EntryActivity" android:exported="false" />
+        <!-- adjustResize: klavye acilinca Kaydet dugmesi ustte kalsin. -->
+        <activity
+            android:name=".AddEntryActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".TasbihCounterActivity" android:exported="false" />
     </application>

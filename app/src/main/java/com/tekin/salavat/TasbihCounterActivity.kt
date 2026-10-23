@@ -12,7 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Sayma ekrani: tek salavat, kaldigi sayidan.
+ * Sayma ekrani: tek kayit (salavat, zikir, dua ...), kaldigi sayidan.
  *
  * Ustte salavatin metni (dokununca Arapca / okunus / anlam arasinda
  * gecer), altinda tesbih uygulamasindaki tespihin aynisi.
@@ -44,7 +44,9 @@ class TasbihCounterActivity : AppCompatActivity() {
     private lateinit var textLabel: TextView
     private lateinit var textView: TextView
 
-    private var salavat: Salavat? = null
+    private var entry: Entry? = null
+    /** Kartta su an gorunen metin (bos alan atlandiysa ayardakinden farkli olabilir). */
+    private var shownText = SalavatSettings.TEXT_READING
     private lateinit var settings: SalavatSettings
 
     /** Sure satirini saniyede bir tazeler; yalnizca ekran onundeyken. */
@@ -68,7 +70,7 @@ class TasbihCounterActivity : AppCompatActivity() {
             return
         }
         t = loaded
-        salavat = SalavatCatalog.get(this, tasbihId)
+        entry = Library.get(this, tasbihId)
         settings = SalavatSettings(this)
         store.setLastId(tasbihId)
         buildUi()
@@ -156,7 +158,7 @@ class TasbihCounterActivity : AppCompatActivity() {
         head.addView(headButton("‹", 30f) { finish() })
         titleView = TasbihUi.text(this, "", 20f, bold = true, maxLines = 1).apply { gravity = Gravity.CENTER }
         head.addView(titleView, TasbihUi.lp(0, TasbihUi.WRAP, 1f))
-        head.addView(headButton("ℹ", 20f) { SalavatActivity.open(this, tasbihId) }.apply { contentDescription = "Salavatın tamamı" })
+        head.addView(headButton("ℹ", 20f) { EntryActivity.open(this, tasbihId) }.apply { contentDescription = "Metnin tamamı" })
         head.addView(headButton("⋮", 22f) { menu() })
         col.addView(head, TasbihUi.lp(TasbihUi.MATCH, dp(48)))
 
@@ -179,7 +181,7 @@ class TasbihCounterActivity : AppCompatActivity() {
             background = TasbihUi.card(this@TasbihCounterActivity)
             setPadding(dp(14), dp(8), dp(14), dp(10))
             isClickable = true
-            setOnClickListener { settings.counterText = (settings.counterText + 1) % SalavatSettings.TEXT_MODES; paintText() }
+            setOnClickListener { settings.counterText = (shownText + 1) % SalavatSettings.TEXT_MODES; paintText() }
         }
         textLabel = TasbihUi.text(this, "", 11.5f, AppColors.TEXT_MUTED, bold = true)
         textCard.addView(textLabel)
@@ -311,8 +313,18 @@ class TasbihCounterActivity : AppCompatActivity() {
     /** Ustteki metin karti: secili gorunum (Arapca / okunus / anlam). */
     private fun paintText() {
         if (!::textView.isInitialized) return
-        val s = salavat ?: run { (textView.parent as View).visibility = View.GONE; return }
-        val mode = settings.counterText
+        val s = entry ?: run { (textView.parent as View).visibility = View.GONE; return }
+        // Bos alani gosterme: Arapca bekleyen kayitta okunusa, okunusu olmayanda anlama gec.
+        var mode = settings.counterText
+        repeat(SalavatSettings.TEXT_MODES) {
+            val empty = when (mode) {
+                SalavatSettings.TEXT_ARABIC -> s.arabic.isBlank()
+                SalavatSettings.TEXT_READING -> s.reading.isBlank()
+                else -> s.meaning.isBlank()
+            }
+            if (empty) mode = (mode + 1) % SalavatSettings.TEXT_MODES
+        }
+        shownText = mode
         textLabel.text = SalavatSettings.TEXT_LABELS[mode] + "  ·  dokun: değiştir"
         val arabic = mode == SalavatSettings.TEXT_ARABIC
         textView.text = when (mode) {

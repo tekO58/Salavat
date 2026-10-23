@@ -1,6 +1,7 @@
 [
   {
     "id": "ibrahimiyye",
+    "section": "salavat",
     "name": "Salât-ı İbrâhîmiyye",
     "aka": "Namazdaki Allâhümme salli – Allâhümme bârik",
     "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ، كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ. اللَّهُمَّ بَارِكْ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ، كَمَا بَارَكْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ، إِنَّكَ حَمِيدٌ مَجِيدٌ",
@@ -14,6 +15,7 @@
   },
   {
     "id": "kisa",
+    "section": "salavat",
     "name": "Salavât-ı Şerîfe (kısa)",
     "aka": "Allâhümme salli alâ seyyidinâ Muhammed",
     "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ",
@@ -27,6 +29,7 @@
   },
   {
     "id": "ummiyye",
+    "section": "salavat",
     "name": "Salât-ı Ümmiyye",
     "aka": "Cuma salavatı",
     "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ النَّبِيِّ الْأُمِّيِّ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلِّمْ",
@@ -40,6 +43,7 @@
   },
   {
     "id": "tefriciye",
+    "section": "salavat",
     "name": "Salât-ı Tefrîciyye",
     "aka": "Salât-ı Nâriye · 4444 salavatı",
     "arabic": "اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَى سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ، وَتَنْفَرِجُ بِهِ الْكُرَبُ، وَتُقْضَى بِهِ الْحَوَائِجُ، وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِيمِ، وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ، وَعَلَى آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ",
@@ -53,6 +57,7 @@
   },
   {
     "id": "munciye",
+    "section": "salavat",
     "name": "Salât-ı Münciye",
     "aka": "Salâten tüncînâ",
     "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ، صَلَاةً تُنْجِينَا بِهَا مِنْ جَمِيعِ الْأَهْوَالِ وَالْآفَاتِ، وَتَقْضِي لَنَا بِهَا جَمِيعَ الْحَاجَاتِ، وَتُطَهِّرُنَا بِهَا مِنْ جَمِيعِ السَّيِّئَاتِ، وَتَرْفَعُنَا بِهَا عِنْدَكَ أَعْلَى الدَّرَجَاتِ، وَتُبَلِّغُنَا بِهَا أَقْصَى الْغَايَاتِ مِنْ جَمِيعِ الْخَيْرَاتِ فِي الْحَيَاةِ وَبَعْدَ الْمَمَاتِ، إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
@@ -66,6 +71,7 @@
   },
   {
     "id": "fatih",
+    "section": "salavat",
     "name": "Salât-ı Fâtih",
     "aka": "Salâtü'l-Fâtih",
     "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ الْفَاتِحِ لِمَا أُغْلِقَ، وَالْخَاتِمِ لِمَا سَبَقَ، نَاصِرِ الْحَقِّ بِالْحَقِّ، وَالْهَادِي إِلَى صِرَاطِكَ الْمُسْتَقِيمِ، وَعَلَى آلِهِ حَقَّ قَدْرِهِ وَمِقْدَارِهِ الْعَظِيمِ",
@@ -79,6 +85,7 @@
   },
   {
     "id": "kamile",
+    "section": "salavat",
     "name": "Salât-ı Kâmile",
     "aka": "Salâtü'l-Kâmile",
     "arabic": "اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ عَدَدَ كَمَالِ اللَّهِ وَكَمَا يَلِيقُ بِكَمَالِهِ",
@@ -92,6 +99,7 @@
   },
   {
     "id": "azimiyye",
+    "section": "salavat",
     "name": "Salât-ı Azîmiyye",
     "aka": "es-Salâtü'l-Azîmiyye",
     "arabic": "اللَّهُمَّ إِنِّي أَسْأَلُكَ بِنُورِ وَجْهِ اللَّهِ الْعَظِيمِ، الَّذِي مَلَأَ أَرْكَانَ عَرْشِ اللَّهِ الْعَظِيمِ، وَقَامَتْ بِهِ عَوَالِمُ اللَّهِ الْعَظِيمِ، أَنْ تُصَلِّيَ عَلَى مَوْلَانَا مُحَمَّدٍ ذِي الْقَدْرِ الْعَظِيمِ، وَعَلَى آلِ نَبِيِّ اللَّهِ الْعَظِيمِ، بِقَدْرِ عَظَمَةِ ذَاتِ اللَّهِ الْعَظِيمِ، فِي كُلِّ لَمْحَةٍ وَنَفَسٍ عَدَدَ مَا فِي عِلْمِ اللَّهِ الْعَظِيمِ، صَلَاةً دَائِمَةً بِدَوَامِ اللَّهِ الْعَظِيمِ، تَعْظِيمًا لِحَقِّكَ يَا مَوْلَانَا يَا مُحَمَّدُ يَا ذَا الْخُلُقِ الْعَظِيمِ، وَسَلِّمْ عَلَيْهِ وَعَلَى آلِهِ مِثْلَ ذَلِكَ، وَاجْمَعْ بَيْنِي وَبَيْنَهُ كَمَا جَمَعْتَ بَيْنَ الرُّوحِ وَالنَّفْسِ، ظَاهِرًا وَبَاطِنًا، يَقَظَةً وَمَنَامًا، وَاجْعَلْهُ يَا رَبِّ رُوحًا لِذَاتِي مِنْ جَمِيعِ الْوُجُوهِ، فِي الدُّنْيَا قَبْلَ الْآخِرَةِ يَا عَظِيمُ",
@@ -100,6 +108,104 @@
     "attribution": "Ahmed b. İdrîs el-Fâsî'ye (ö. 1253/1837) nispet edilir",
     "source": "Ahmed b. İdrîs'in evrâdı (İdrîsiyye / Ahmediyye).",
     "target": 33,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "subhanallah",
+    "section": "zikir",
+    "name": "Sübhânallah",
+    "aka": "Tesbih",
+    "arabic": "سُبْحَانَ اللّٰهِ",
+    "reading": "Sübhânallah",
+    "meaning": "Allah her türlü eksiklikten münezzehtir.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Namaz sonrası tesbihat (33 defa); Müslim, Mesâcid (namaz sonrası tesbihat hadisi).",
+    "target": 33,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "elhamdulillah",
+    "section": "zikir",
+    "name": "Elhamdülillah",
+    "aka": "Tahmîd",
+    "arabic": "الْحَمْدُ لِلّٰهِ",
+    "reading": "Elhamdülillah",
+    "meaning": "Hamd Allah'adır.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Namaz sonrası tesbihat (33 defa); Müslim, Mesâcid (namaz sonrası tesbihat hadisi).",
+    "target": 33,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "allahuekber",
+    "section": "zikir",
+    "name": "Allâhu ekber",
+    "aka": "Tekbîr",
+    "arabic": "اللّٰهُ أَكْبَرُ",
+    "reading": "Allâhu ekber",
+    "meaning": "Allah en büyüktür.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Namaz sonrası tesbihat (33/34 defa); Müslim, Mesâcid (namaz sonrası tesbihat hadisi).",
+    "target": 33,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "tevhid",
+    "section": "zikir",
+    "name": "Kelime-i Tevhîd",
+    "aka": "Tehlîl",
+    "arabic": "لَا إِلٰهَ إِلَّا اللّٰهُ",
+    "reading": "Lâ ilâhe illallah",
+    "meaning": "Allah'tan başka ilâh yoktur.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Tirmizî, Daavât (“Zikrin en faziletlisi lâ ilâhe illallah'tır” hadisi).",
+    "target": 100,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "estagfirullah",
+    "section": "zikir",
+    "name": "Estağfirullah",
+    "aka": "İstiğfar",
+    "arabic": "أَسْتَغْفِرُ اللّٰهَ",
+    "reading": "Estağfirullah",
+    "meaning": "Allah'tan bağışlanma dilerim.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Müslim, Zikir (Hz. Peygamber'in günde yüz defa istiğfarı).",
+    "target": 100,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "subhanallahivebihamdihi",
+    "section": "zikir",
+    "name": "Sübhânallâhi ve bi-hamdihî",
+    "aka": "",
+    "arabic": "سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ",
+    "reading": "Sübhânallâhi ve bi-hamdihî",
+    "meaning": "Allah'ı hamd ile tesbih ederim.",
+    "attribution": "Hadislerde geçen zikir",
+    "source": "Buhârî, Daavât; Müslim, Zikir (günde yüz defa okunması).",
+    "target": 100,
+    "note": "",
+    "verified": false
+  },
+  {
+    "id": "rabbena-atina",
+    "section": "dua",
+    "name": "Rabbenâ âtinâ",
+    "aka": "Bakara 2/201",
+    "arabic": "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+    "reading": "Rabbenâ âtinâ fi'd-dünyâ haseneten ve fi'l-âhireti haseneten ve kınâ azâbe'n-nâr.",
+    "meaning": "Rabbimiz! Bize dünyada da iyilik ver, âhirette de iyilik ver ve bizi cehennem azabından koru.",
+    "attribution": "Kur'ân-ı Kerîm",
+    "source": "Bakara sûresi 2/201.",
+    "target": 0,
     "note": "",
     "verified": false
   }
