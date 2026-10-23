@@ -156,31 +156,7 @@ class TasbihStoreTest {
         assertEquals(5, store().get("x")!!.count)
     }
 
-    @Test
-    fun `yedekle ve geri yukle tesbihleri geri getirir`() {
-        store().save(tasbih(1000))
-        repeat(327) { store().tap("t1") }
-        val json = DataBackup.export(context)
-        assertTrue(DataBackup.summarize(json)!!.lines.contains("• 1 tesbih"))
-
-        store().deleteEverything()
-        assertTrue(store().getAll().isEmpty())
-
-        assertTrue((DataBackup.restore(context, json) ?: 0) > 0)
-        val back = store().get("t1")!!
-        assertEquals(327, back.count)
-        assertEquals(327L, back.total)
-        assertEquals(327, store().todayTotal())
-        assertEquals("t1", store().getLastId())
-    }
-
-    @Test
-    fun `tesbih icermeyen eski yedek mevcut tesbihlere dokunmaz`() {
-        val oldBackup = DataBackup.export(context)   // tesbih yokken alinan yedek
-        store().save(tasbih(33).copy(count = 20, total = 20))
-        DataBackup.restore(context, oldBackup)
-        assertEquals(20, store().get("t1")!!.count)
-    }
+    // Yedekleme testleri workplanner-app'te kaldi (DataBackup burada yok).
 
     @Test
     fun `tespih gorunumu tesbih bazinda saklanir`() {
