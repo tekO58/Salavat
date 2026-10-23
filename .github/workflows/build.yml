@@ -1,0 +1,60 @@
+name: Build APK
+
+# Her push'ta testler ve debug APK. APK depodaki sabit test anahtariyla
+# imzali (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v5
+
+      - name: Java kur
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle önbelleği
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Robolectric önbelleği
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ runner.os }}-${{ hashFiles('app/build.gradle') }}
+          restore-keys: robolectric-${{ runner.os }}-
+
+      - name: Birim testleri
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Test raporunu yükle
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: APK derle
+        run: ./gradlew assembleDebug
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v6
+        with:
+          name: salavat-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
