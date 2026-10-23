@@ -78,6 +78,15 @@ input, textarea { font: inherit; color: var(--text); }
 /* Kayit sayfasi */
 .text-card { padding: 10px 14px 14px; margin-bottom: 12px; }
 .text-card .label { margin-bottom: 6px; }
+/* Acilir kapanir kart (Arapça / Okunuşu / Anlamı) */
+.text-card.fold { padding: 0; }
+.fold-head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px 6px; text-align: left; }
+.fold-head .label { margin-bottom: 0; }
+.fold-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 16px; }
+.chev { color: var(--muted); font-size: 16px; line-height: 1; }
+.fold-body { padding: 0 14px 14px; }
+.fold.closed .fold-head { padding-bottom: 12px; }
+.fold.closed .fold-body { display: none; }
 .arabic-text { font-size: var(--ar-size); line-height: 1.8; user-select: text; }
 .reading-text, .meaning-text { font-size: var(--tx-size); line-height: 1.4; user-select: text; white-space: pre-line; }
 .bottom-bar { position: sticky; bottom: 0; background: var(--field); padding: 10px 16px 16px; border-top: 1px solid var(--stroke); }

@@ -29,7 +29,7 @@ let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1 };
+  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {} };
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
@@ -426,6 +426,22 @@ function entryPage(id) {
   };
 
   const card = (label, body) => h('div.card.text-card', null, h('div.label', null, label), body);
+  /** Acilir kapanir kart: basliga dokununca kapanir/acilir; secim butun kayitlarda hatirlanir. */
+  const fold = (key, label, body) => {
+    const el = h('div.card.text-card.fold');
+    const paintFold = () => {
+      const open = state.open[key] !== false;
+      el.classList.toggle('closed', !open);
+      head.setAttribute('aria-expanded', String(open));
+      chev.textContent = open ? '▾' : '▸';
+    };
+    const chev = h('span.chev');
+    const head = h('button.fold-head', { onclick: () => { state.open[key] = state.open[key] === false; save(); paintFold(); } },
+      h('span.label', null, label), chev);
+    el.append(head, h('div.fold-body', null, body));
+    paintFold();
+    return el;
+  };
   const origin = [e.attribution && 'Nispet: ' + e.attribution, e.source && 'Kaynak: ' + e.source, e.note].filter(Boolean).join('\n\n');
 
   const stats = h('div.sec.ellipsis', { style: { fontSize: '13px' } });
@@ -460,10 +476,10 @@ function entryPage(id) {
       e.user ? h('button.icon-btn', { onclick: menu }, '⋮') : null),
     h('div.scroll', null,
       h('div.mb8', { style: { fontSize: '13.5px', color: s ? s.color : 'var(--muted)' } }, [s && `${s.icon} ${s.name}`, e.aka].filter(Boolean).join('  ·  ')),
-      e.arabic ? card('Arapça', h('div.ar.arabic-text', null, e.arabic))
-        : card('Arapça', h('div.warn', null, 'Arapça bekliyor' + (e.user ? ' · bulunca ⋮ → Düzenle ile ekle.' : '.'))),
-      e.reading ? card('Okunuşu', h('div.reading-text', null, e.reading)) : null,
-      e.meaning ? card('Anlamı', h('div.meaning-text.sec', null, e.meaning)) : null,
+      e.arabic ? fold('arabic', 'Arapça', h('div.ar.arabic-text', null, e.arabic))
+        : fold('arabic', 'Arapça', h('div.warn', null, 'Arapça bekliyor' + (e.user ? ' · bulunca ⋮ → Düzenle ile ekle.' : '.'))),
+      e.reading ? fold('reading', 'Okunuşu', h('div.reading-text', null, e.reading)) : null,
+      e.meaning ? fold('meaning', 'Anlamı', h('div.meaning-text.sec', null, e.meaning)) : null,
       origin ? card('Kaynak', h('div.sec', { style: { fontSize: '13.5px', whiteSpace: 'pre-line' } }, origin)) : null,
       !e.verified && !e.user ? h('p.warn', { style: { fontSize: '12.5px' } }, '⚠ Bu metin henüz ikinci bir kaynakla harf harf karşılaştırılmadı.') : null),
     h('div.bottom-bar', null, stats, targets,
