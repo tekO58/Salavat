@@ -1,13 +1,16 @@
 name: Build APK
 
-# Her push'ta debug APK. APK depodaki sabit test anahtariyla imzali
-# (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+# Android dosyalari degisince debug APK. APK depodaki sabit test anahtariyla
+# imzali (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+# Yalnizca web/ ya da dokuman degisirse calismaz (web: pages.yml).
 # Birim testleri her 10 kosuda bir (run_number 10'un kati) ya da
 # "Run workflow"da elle isaretlenirse; diger kosularda APK derlemesi
 # derleme hatasini yine yakalar.
 on:
   push:
+    paths-ignore: ['web/**', 'docs/**', 'README.md', '.github/workflows/pages.yml']
   pull_request:
+    paths-ignore: ['web/**', 'docs/**', 'README.md', '.github/workflows/pages.yml']
   workflow_dispatch:
     inputs:
       run_tests:

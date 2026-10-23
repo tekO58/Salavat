@@ -1,6 +1,16 @@
 # Salavat
 
-Salavat, zikir ve dua kütüphanesi ve tespih. Native Android (Kotlin, ekranlar koddan kurulur).
+Salavat, zikir ve dua kütüphanesi ve tespih.
+
+- **Web uygulaması** (`web/`, şu an geliştirilen): kurulumsuz HTML/CSS/JS,
+  GitHub Pages'te yayınlanır (`.github/workflows/pages.yml`). Telefonda adresi
+  açıp "Ana ekrana ekle" ile uygulama gibi kullanılır, internetsiz de açılır.
+  Kullanıcının verisi o tarayıcıda saklanır (localStorage). Ayırıcı testi:
+  `node web/test/parser.test.js`.
+- **Android** (`app/`, Kotlin, donduruldu): web'de tasarım oturunca son kez
+  güncellenip APK çıkarılacak.
+
+Aşağıdaki ekran ve veri açıklamaları iki sürüm için de geçerli.
 
 ## Ekranlar
 
