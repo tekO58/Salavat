@@ -33,8 +33,10 @@ jobs:
       - name: Kodu indir
         uses: actions/checkout@v5
 
-      - name: Ayırıcı testleri
-        run: node web/test/parser.test.js
+      - name: Testler (ayırıcı, tespih süresi)
+        run: |
+          node web/test/parser.test.js
+          node web/test/tasbih.test.js
 
       - name: Siteyi hazırla
         run: |

@@ -12,15 +12,29 @@ const SECTIONS = [
 ];
 const SECTION_ICONS = ['🌙', '✨', '🌹', '🕋', '🕌', '📖', '📿', '🤲', '🌟', '🌸', '🌿', '💧', '💚', '🕯️', '🌅', '🍃'];
 const SECTION_COLORS = ['#E39BD0', '#2DD4BF', '#F0A94B', '#A78BFA', '#E8746A', '#5B8DEF'];
-/** Tespih boncuk renkleri (Android'deki materyallerin sade karsiligi). */
-const BEADS = [
-  { id: 'kuka', name: 'Kuka', color: '#6b3a22', light: '#9a6040' },
-  { id: 'kehribar', name: 'Kehribar', color: '#c9822a', light: '#f0b860' },
-  { id: 'siyah', name: 'Siyah', color: '#1d1d22', light: '#55555f' },
-  { id: 'yesil', name: 'Yeşil', color: '#1f6b47', light: '#3fa877' },
-  { id: 'lacivert', name: 'Lacivert', color: '#1f3a78', light: '#4a6fc0' },
-  { id: 'beyaz', name: 'Beyaz', color: '#d9d4c7', light: '#ffffff' }
+/*
+ * Tespih materyalleri: workplanner-app'teki TasbihMaterial ile ayni adlar ve
+ * renkler. light/base/dark govde tonlari, gloss parlaklik (0 mat..1 cam),
+ * glow isik gecirgenligi (kehribar gibi), metal ara parcalar, accent halka,
+ * +1 dugmesi ve yazilarin rengi.
+ */
+const METALS = { gold: ['#FFF1B8', '#C99A3A', '#5E4210'], silver: ['#FFFFFF', '#A7ADB8', '#3B4049'], bronze: ['#F3C79A', '#9A6434', '#3E2410'] };
+const MATERIALS = [
+  { id: 'KUKA', label: 'Kuka', detail: 'doğal', desc: 'Doğal ahşap dokusu, mat ve sıcak.', light: '#B88458', base: '#6E4326', dark: '#2E1A0D', gloss: 0.18, glow: 0, metal: 'bronze', accent: '#C98E5A' },
+  { id: 'KEHRIBAR', label: 'Kehribar', detail: 'bal rengi', desc: 'Parlak, yarı saydam; ışığı içine alır.', light: '#FFE08A', base: '#E39A1E', dark: '#7A3E05', gloss: 0.85, glow: 0.75, metal: 'gold', accent: '#F2A93B' },
+  { id: 'TURUNCU_KEHRIBAR', label: 'Turuncu kehribar', detail: 'koyu bal', desc: 'Sıcak turuncu, yarı saydam ve parlak.', light: '#FFB27A', base: '#E0561C', dark: '#6E1E05', gloss: 0.85, glow: 0.65, metal: 'gold', accent: '#F07A2A' },
+  { id: 'YESIL', label: 'Yeşil akik', detail: 'doğal taş', desc: 'Doğal taş görünümü, parlak ve derin renk.', light: '#7FD9A0', base: '#1E7A45', dark: '#0A2E19', gloss: 0.75, glow: 0.2, metal: 'silver', accent: '#2FBF71' },
+  { id: 'SIYAH', label: 'Siyah', detail: 'oniks', desc: 'Derin siyah, ayna gibi parlak.', light: '#5A5F6B', base: '#15161A', dark: '#000000', gloss: 1, glow: 0, metal: 'silver', accent: '#A9B1C2' },
+  { id: 'LACIVERT', label: 'Lacivert', detail: 'parlak', desc: 'Koyu mavi, cam gibi parlak.', light: '#7FA4FF', base: '#1C3FA8', dark: '#07153F', gloss: 0.9, glow: 0.35, metal: 'silver', accent: '#5B84F0' },
+  { id: 'MOR', label: 'Mor', detail: 'ametist', desc: 'Ametist moru, yarı saydam kristal.', light: '#D6B4FF', base: '#7A3FC4', dark: '#2A0E4F', gloss: 0.85, glow: 0.5, metal: 'silver', accent: '#B08AF5' },
+  { id: 'KIRMIZI', label: 'Kırmızı', detail: 'akik', desc: 'Kırmızı akik, parlak ve derin.', light: '#FF9A8A', base: '#B5161E', dark: '#45050A', gloss: 0.8, glow: 0.4, metal: 'gold', accent: '#E8535A' },
+  { id: 'BEYAZ', label: 'Beyaz / krem', detail: 'howlit', desc: 'Kırık beyaz taş, ince gri damarlı.', light: '#FFFFFF', base: '#E6E1D6', dark: '#8E887C', gloss: 0.45, glow: 0, metal: 'gold', accent: '#EDE7DA' },
+  { id: 'TURKUAZ', label: 'Turkuaz', detail: 'doğal taş', desc: 'Doğal turkuaz, koyu damarlı, yarı mat.', light: '#9BF0EA', base: '#1AA6A0', dark: '#064A48', gloss: 0.4, glow: 0, metal: 'silver', accent: '#2EC4C0' }
 ];
+/** Eski kayitlardaki (bead: 'kuka' ...) renk adindan materyal. */
+const LEGACY_BEAD = { kuka: 'KUKA', kehribar: 'KEHRIBAR', siyah: 'SIYAH', yesil: 'YESIL', lacivert: 'LACIVERT', beyaz: 'BEYAZ' };
+const materialOf = (t) => MATERIALS.find((m) => m.id === (t.material || LEGACY_BEAD[t.bead])) || MATERIALS[0];
+const materialTitle = (m) => (m.detail ? `${m.label} (${m.detail})` : m.label);
 const EVERY_PRESETS = [0, 1, 10, 33, 99];
 const MAX_TARGET = 50000;
 const KEY = 'salavat.v1';
@@ -29,7 +43,7 @@ let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {} };
+  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000 };
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
@@ -85,12 +99,16 @@ function matches(e, q) {
 /** Kaydin sayaci; yoksa kaydin okuma sayisiyla (sayacsizda 33) olusur. */
 function tasbihFor(e) {
   if (!state.tasbih[e.id]) {
-    state.tasbih[e.id] = { target: hasCounter(e) ? e.target : 33, count: 0, rounds: 0, total: 0, onTarget: 'stop', every: 33, sound: false, finish: true, bead: 'kuka' };
-    save();
+    state.tasbih[e.id] = { target: hasCounter(e) ? e.target : 33, onTarget: 'stop', every: 33, sound: false, finish: true, material: 'KUKA' };
   }
+  // Eski kayitlarda sure alanlari yok: tamamlanir.
+  state.tasbih[e.id] = TasbihCore.normalizeTasbih(state.tasbih[e.id]);
+  save();
   return state.tasbih[e.id];
 }
-const isDone = (t) => t.onTarget === 'stop' && t.count >= t.target;
+const isDone = TasbihCore.isDone;
+/** Iki dokunus arasi bu sureyi asarsa sure duraklar. */
+const idleMs = () => (TasbihCore.IDLE_OPTIONS.includes(state.idle) ? state.idle : TasbihCore.DEFAULT_IDLE_MS);
 
 function addHist(id, delta) {
   const day = dayKey();
@@ -101,33 +119,16 @@ function addHist(id, delta) {
 
 /** Tek dokunus: 'blocked' | 'completed' | 'milestone' | 'counted' (Android: TasbihLogic.tap). */
 function tap(id) {
-  const t = state.tasbih[id];
-  if (isDone(t)) return 'blocked';
-  const next = t.count + 1;
-  t.total++;
+  const ev = TasbihCore.tap(state.tasbih[id], Date.now(), idleMs());
+  if (ev === 'blocked') return ev;
   state.last = id;
   addHist(id, +1);
-  let ev;
-  if (next >= t.target) {
-    t.rounds++;
-    t.count = t.onTarget === 'round' ? 0 : t.target;
-    ev = 'completed';
-  } else {
-    t.count = next;
-    ev = t.every > 0 && next % t.every === 0 ? 'milestone' : 'counted';
-  }
   save();
   return ev;
 }
 
 function undo(id) {
-  const t = state.tasbih[id];
-  if (t.total <= 0) return false;
-  if (t.onTarget === 'stop' && t.count >= t.target) { t.count = t.target - 1; t.rounds = Math.max(0, t.rounds - 1); }
-  else if (t.count > 0) t.count--;
-  else if (t.rounds > 0 && t.onTarget === 'round') { t.count = t.target - 1; t.rounds--; }
-  else return false;
-  t.total--;
+  if (!TasbihCore.undo(state.tasbih[id])) return false;
   addHist(id, -1);
   save();
   return true;
@@ -584,21 +585,66 @@ function addPage(params) {
 /* --------------------------------------------------------------- tespih */
 
 /** 33 boncuk, 2 nisane ve imame; sayinca halka bir boncuk doner. */
-function rosarySvg(bead) {
+let svgUid = 0;
+/**
+ * Materyalin boncuk, nisane ve imame cizimleri (<defs> icinde). Govde uc
+ * tonlu, parlaklik ust soldaki isik lekesiyle, isik gecirgenligi alttan
+ * gelen sicak parlamayla verilir. Donen: { defs, bead, nisane, imame } kimlikleri.
+ */
+function materialDefs(m) {
+  const u = 'm' + (++svgUid);
+  const metal = METALS[m.metal] || METALS.silver;
+  const defs = `
+    <radialGradient id="${u}b" cx="38%" cy="32%" r="72%"><stop offset="0" stop-color="${m.light}"/><stop offset=".5" stop-color="${m.base}"/><stop offset="1" stop-color="${m.dark}"/></radialGradient>
+    <radialGradient id="${u}g" cx="58%" cy="72%" r="55%"><stop offset="0" stop-color="${m.light}" stop-opacity="${(m.glow * 0.75).toFixed(2)}"/><stop offset="1" stop-color="${m.light}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${u}m" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${metal[0]}"/><stop offset=".55" stop-color="${metal[1]}"/><stop offset="1" stop-color="${metal[2]}"/></radialGradient>
+    <symbol id="${u}bead" viewBox="-13 -13 26 26" overflow="visible">
+      <circle r="12.5" fill="url(#${u}b)" stroke="#0007" stroke-width=".8"/>
+      ${m.glow > 0 ? `<circle r="12" fill="url(#${u}g)"/>` : ''}
+      <ellipse cx="-4" cy="-5" rx="4.2" ry="2.8" fill="#fff" opacity="${(0.12 + m.gloss * 0.55).toFixed(2)}" transform="rotate(-30 -4 -5)"/>
+    </symbol>
+    <symbol id="${u}nis" viewBox="-8 -8 16 16" overflow="visible">
+      <circle r="7.5" fill="url(#${u}m)" stroke="#0007" stroke-width=".8"/>
+      <ellipse cx="-2.4" cy="-3" rx="2.4" ry="1.5" fill="#fff" opacity=".6"/>
+    </symbol>
+    <symbol id="${u}ima" viewBox="-10 -18 20 36" overflow="visible">
+      <ellipse rx="9" ry="16" fill="url(#${u}b)" stroke="#0007" stroke-width=".8"/>
+      ${m.glow > 0 ? `<ellipse rx="8.5" ry="15" fill="url(#${u}g)"/>` : ''}
+      <rect x="-5.5" y="-18" width="11" height="5" rx="2" fill="url(#${u}m)"/>
+      <ellipse cx="-3" cy="-7" rx="2.6" ry="5" fill="#fff" opacity="${(0.1 + m.gloss * 0.45).toFixed(2)}"/>
+    </symbol>`;
+  return { defs, bead: `#${u}bead`, nis: `#${u}nis`, ima: `#${u}ima` };
+}
+
+/** Kucuk tespih simgesi (gorunum secicisi): 18 boncuk ve imame. */
+function rosaryPreview(m) {
+  const d = materialDefs(m);
+  let out = '';
+  const n = 18, step = 360 / (n + 1);
+  for (let i = 0; i < n; i++) {
+    const a = (90 + step * (i + 1)) * Math.PI / 180;
+    out += `<use href="${d.bead}" x="${(50 + 30 * Math.cos(a) - 8).toFixed(1)}" y="${(42 + 30 * Math.sin(a) - 8).toFixed(1)}" width="16" height="16"/>`;
+  }
+  out += `<use href="${d.ima}" x="44" y="70" width="12" height="22"/>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>${d.defs}</defs>${out}</svg>`;
+}
+
+function rosarySvg(m) {
   const N = 33, slots = N + 3, step = 360 / (slots + 2), R = 140, cx = 170, cy = 170;
+  const d = materialDefs(m);
   let beads = '';
   // Saga bir bosluk birakilir (cekme noktasi); dizi: imame, 11, nisane, 11, nisane, 11.
   const order = ['imame'].concat(Array(11).fill('b'), ['n'], Array(11).fill('b'), ['n'], Array(11).fill('b'));
   order.forEach((kind, i) => {
-    const a = (i * step + 15) * Math.PI / 180;
-    const x = (cx + R * Math.cos(a)).toFixed(1), y = (cy + R * Math.sin(a)).toFixed(1);
-    if (kind === 'b') beads += `<circle cx="${x}" cy="${y}" r="12.5" fill="url(#bead)" stroke="#0006" stroke-width="1"/>`;
-    else if (kind === 'n') beads += `<circle cx="${x}" cy="${y}" r="7.5" fill="#d8c08a" stroke="#0006"/>`;
-    else beads += `<ellipse cx="${x}" cy="${y}" rx="9" ry="16" fill="url(#bead)" stroke="#0006" transform="rotate(${(i * step + 15 + 90).toFixed(1)} ${x} ${y})"/>`;
+    const deg = i * step + 15, a = deg * Math.PI / 180;
+    const x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+    if (kind === 'b') beads += `<use href="${d.bead}" x="${(x - 13).toFixed(1)}" y="${(y - 13).toFixed(1)}" width="26" height="26"/>`;
+    else if (kind === 'n') beads += `<use href="${d.nis}" x="${(x - 8).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="16" height="16"/>`;
+    else beads += `<use href="${d.ima}" x="${(x - 10).toFixed(1)}" y="${(y - 18).toFixed(1)}" width="20" height="36" transform="rotate(${(deg + 90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
   });
   return { step, svg: `<svg viewBox="0 0 340 340" role="img" aria-label="Tespih">
-    <defs><radialGradient id="bead" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="${bead.light}"/><stop offset="1" stop-color="${bead.color}"/></radialGradient></defs>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#3a2a2066" stroke-width="2"/>
+    <defs>${d.defs}</defs>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${m.dark}88" stroke-width="2"/>
     <g class="ring">${beads}</g>
     <circle cx="${cx}" cy="${cy}" r="98" fill="none" stroke="#26314D" stroke-width="7"/>
     <circle class="arc" cx="${cx}" cy="${cy}" r="98" fill="none" stroke-width="7" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
@@ -608,19 +654,58 @@ function rosarySvg(bead) {
   </svg>` };
 }
 
+/**
+ * Tespih Gorunumu (workplanner'daki TasbihAppearancePicker): ustte buyuk
+ * onizleme, altta 10 materyal; "Bu görünümü kullan" ile onPick.
+ */
+function pickMaterial(current, onPick) {
+  let selected = current, o;
+  const preview = h('div', { style: { width: '132px', height: '132px', flex: 'none' } });
+  const infoName = h('div', { style: { fontSize: '19px', fontWeight: 700 } });
+  const infoDesc = h('div.sec', { style: { fontSize: '14px', marginTop: '6px' } });
+  const grid = h('div.mat-grid');
+  const use = h('button.primary', { onclick: () => { o.remove(); onPick(selected); } }, 'Bu görünümü kullan');
+  const paint = () => {
+    preview.innerHTML = rosaryPreview(selected);
+    infoName.textContent = materialTitle(selected);
+    infoDesc.textContent = selected.desc;
+    use.style.background = selected.accent;
+    grid.replaceChildren(...MATERIALS.map((m) => {
+      const on = m.id === selected.id;
+      const icon = h('div.mat-icon');
+      icon.innerHTML = rosaryPreview(m);
+      return h('button.mat-tile' + (on ? '.on' : ''), {
+        onclick: () => { selected = m; paint(); }, 'aria-label': materialTitle(m), 'aria-pressed': String(on),
+        style: on ? { borderColor: m.accent, background: mix(m.accent, '#151D32', 0.12) } : null
+      }, icon, h('div.mat-name', null, m.label), m.detail ? h('div.muted', { style: { fontSize: '11px' } }, `(${m.detail})`) : null);
+    }));
+  };
+  paint();
+  o = overlay(h('div.mat-sheet', null,
+    h('div.head', null, h('button.icon-btn.back', { onclick: () => o.remove() }, '‹'), h('div.title', null, 'Tespih Görünümü')),
+    h('div.scroll', null,
+      h('div.card.row', { style: { padding: '12px 16px 12px 12px', gap: '14px' } }, preview, h('div.grow', null, infoName, infoDesc)),
+      h('div', { style: { fontSize: '16px', fontWeight: 700, margin: '20px 0 10px' } }, 'Tespih Türü (Renk ve Materyal)'),
+      grid),
+    h('div', { style: { padding: '0 16px 16px' } }, use)), true);
+}
+
+let counterTicker = null;
+
 function counterPage(id) {
   const e = entryOf(id);
   if (!e) { toast('Kayıt bulunamadı'); go('#/'); return; }
   const t = tasbihFor(e);
   state.last = id; save();
-  const s = sectionOf(e.section);
-  const color = s ? s.color : '#E8B34A';
-  const bead = BEADS.find((b) => b.id === t.bead) || BEADS[0];
-  const { svg, step } = rosarySvg(bead);
+  // Halka, +1 dugmesi ve yazilarin rengi tespihin materyalinden (workplanner'daki gibi).
+  const mat = materialOf(t);
+  const color = mat.accent;
+  const { svg, step } = rosarySvg(mat);
 
   const roundVal = h('div.val'), roundSub = h('div.sec', { style: { fontSize: '13px' } });
   const totalVal = h('div.val');
-  const todayLine = h('div.sec', { style: { fontSize: '13px', textAlign: 'center', marginTop: '7px' } });
+  // Sure: bu tur, kalan tahmini, hiz; altinda tamamlanan turlarin ozeti.
+  const timeLine = h('div.sec', { style: { fontSize: '13px', textAlign: 'center', marginTop: '7px', whiteSpace: 'pre-line', fontVariantNumeric: 'tabular-nums' } });
   const ctLabel = h('div.label'), ctBody = h('div.body');
   const stage = h('div.stage');
   stage.innerHTML = svg;
@@ -663,7 +748,7 @@ function counterPage(id) {
     roundVal.textContent = num(t.rounds);
     roundSub.textContent = `${num(t.count)} / ${num(t.target)}`;
     totalVal.textContent = num(t.total);
-    todayLine.textContent = `Bugün ${num(todayOf(id))}  ·  Hedefte: ${t.onTarget === 'stop' ? 'dur' : 'yeni tur'}`;
+    paintTime();
     ringEl.style.transform = `rotate(${(t.total * step).toFixed(2)}deg)`;
     ringEl.style.transformOrigin = '170px 170px';
     const c = 2 * Math.PI * 98, p = Math.min(1, t.count / t.target);
@@ -675,6 +760,26 @@ function counterPage(id) {
     nm.setAttribute('fill', isDone(t) ? '#7FBF8C' : color);
     soundVal.textContent = t.sound ? 'Açık' : 'Kapalı';
     vibVal.textContent = t.every === 0 ? 'Kapalı' : t.every === 1 ? 'Her adette' : `Her ${t.every} adette`;
+  }
+
+  /**
+   * "⏱ 1:48 · ≈ 3 dk kaldı · ~34/dk" ve altinda tamamlanan turlar. Sure son
+   * dokunustan beri akar; bekleme sinirini gecince duraklar.
+   */
+  function paintTime() {
+    const T = TasbihCore, now = Date.now(), idle = idleMs();
+    const live = T.liveRoundMs(t, now, idle);
+    const paused = t.lastTapAt > 0 && now - t.lastTapAt > idle;
+    let eta = '';
+    if (!isDone(t)) {
+      const ms = T.etaMs(t.intervals, t.target - t.count);
+      eta = ms == null ? ` · tahmin ${T.SPEED_MIN} çekişten sonra` : ` · ${T.approx(ms)} kaldı · ~${T.perMinute(t.intervals)}/dk`;
+    }
+    const first = isDone(t) && t.lastRoundMs > 0 ? `⏱ Tur ${T.format(t.lastRoundMs)} · adet başına ${T.perBead(t.lastRoundMs, t.target)}`
+      : live <= 0 && t.count === 0 && !t.intervals.length ? '⏱ İlk çekişte süre başlar'
+        : `⏱ ${T.format(live)}${paused ? ' · duraklatıldı' : ''}${eta}`;
+    const summary = T.summary(t);
+    timeLine.textContent = summary ? first + '\n' + summary : first;
   }
 
   function count() {
@@ -701,9 +806,9 @@ function counterPage(id) {
   stage.addEventListener('pointercancel', () => { startY = null; });
 
   const reset = () => choose('Sıfırla · ' + e.name, [
-    { label: 'Sayacı ve turu sıfırla  (toplam kalır)', fn: () => { t.count = 0; t.rounds = 0; save(); paint(); toast('Sayaç sıfırlandı'); } },
-    { label: 'Toplamı da sıfırla', fn: () => confirmDlg('Toplam da sıfırlansın mı?', `"${e.name}" için sayaç, tur ve toplam (${num(t.total)} adet) sıfırlanacak. Günlük geçmiş kalır.`, 'Sıfırla',
-      () => { t.count = 0; t.rounds = 0; t.total = 0; save(); paint(); toast('Sıfırlandı'); }) }
+    { label: 'Sayacı ve turu sıfırla  (toplam kalır)', fn: () => { TasbihCore.resetCounter(t); save(); paint(); toast('Sayaç sıfırlandı'); } },
+    { label: 'Toplamı da sıfırla', fn: () => confirmDlg('Toplam da sıfırlansın mı?', `"${e.name}" için sayaç, tur, toplam (${num(t.total)} adet) ve süre istatistiği sıfırlanacak. Günlük geçmiş kalır.`, 'Sıfırla',
+      () => { TasbihCore.resetAll(t); save(); paint(); toast('Sıfırlandı'); }) }
   ]);
   const pickEvery = () => choose('Titreşim', EVERY_PRESETS.map((v) => ({
     label: v === 0 ? 'Kapalı' : v === 1 ? 'Her adette' : `Her ${v} adette`, on: v === t.every,
@@ -713,7 +818,10 @@ function counterPage(id) {
     { label: `🎯  Hedef: ${num(t.target)}`, fn: () => askNumber('Hedef', 'Kaç kere okunacak?', t.target, (v) => { t.target = v; t.count = Math.min(t.count, v); save(); paint(); }) },
     { label: t.onTarget === 'stop' ? '🔁  Hedefte: dur  →  yeni tur başlat' : '⏹  Hedefte: yeni tur  →  dur', fn: () => { t.onTarget = t.onTarget === 'stop' ? 'round' : 'stop'; save(); paint(); } },
     { label: `🏁  Bitiş titreşimi: ${t.finish ? 'Açık' : 'Kapalı'}`, fn: () => { t.finish = !t.finish; save(); if (t.finish) vib([0, 700]); } },
-    { label: `🎨  Tespih rengi: ${bead.name}`, fn: () => choose('Tespih rengi', BEADS.map((b) => ({ label: b.name, on: b.id === t.bead, fn: () => { t.bead = b.id; save(); render(); } }))) },
+    { label: `🎨  Tespih görünümü: ${mat.label}`, fn: () => pickMaterial(mat, (m) => { t.material = m.id; delete t.bead; save(); render(); }) },
+    { label: `⏸  Süre duraklaması: ${TasbihCore.idleLabel(idleMs())} ara verince`, fn: () => choose('Süre ne zaman duraklasın?', TasbihCore.IDLE_OPTIONS.map((ms) => ({
+      label: `${TasbihCore.idleLabel(ms)} dokunulmazsa`, on: ms === idleMs(), fn: () => { state.idle = ms; save(); paint(); }
+    }))) },
     { label: '🔄  Sıfırla', fn: reset },
     { label: '📈  Geçmiş', fn: () => {
       const days = Object.entries(state.hist[id] || {}).filter((d) => d[1] > 0).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30);
@@ -730,7 +838,7 @@ function counterPage(id) {
     h('div.stats', null,
       h('div.card', null, h('div.label', null, 'Tur'), roundVal, roundSub),
       h('div.card', null, h('div.label', null, 'Toplam'), totalVal, h('div.sec', { style: { fontSize: '13px' } }, 'adet'))),
-    todayLine,
+    timeLine,
     ctCard,
     stage,
     t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
@@ -749,6 +857,8 @@ function counterPage(id) {
   paintText();
   paint();
   keepAwake(true);
+  // Sure satiri saniyede bir tazelenir (ekran degisince render() durdurur).
+  counterTicker = setInterval(paintTime, 1000);
 }
 
 /* ---------------------------------------------------------- yonlendirme */
@@ -760,6 +870,7 @@ function applySizes() {
 
 function render() {
   document.querySelectorAll('.overlay').forEach((o) => o.remove());
+  clearInterval(counterTicker);
   const [path, query] = route().replace(/^#\/?/, '').split('?');
   const [page, arg] = path.split('/');
   const params = new URLSearchParams(query || '');
