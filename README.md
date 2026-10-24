@@ -23,6 +23,9 @@ Web'de eklenip Android'e henüz taşınmayanlar:
 - Tespih: büyütülmüş halka (0.35 / 0.45)
 - **Vird rutini**: Sabah / Öğle / İkindi / Akşam / Yatsı listeleri, sırayla okuma,
   bitince sıradakine geçiş, sayaçsız kalemde "Okudum"; kayıt sayfasında 📅 Virde ekle
+- UX düzeltmeleri: Arapça · Okunuş · Türkçe adları her yerde aynı; tespih ekranı tek ekrana
+  sığar (Ses/Titreşim yuvarlak düğmede, TUR kartından hedef); kayıt başlığında Aa,
+  alt çubukta 📅 Virde ekle; boş vakte hazır namaz tesbihatı; dokunma alanları en az 40 px
 - **Okuma sayfası** (mushaf): kâğıt zemin, Arapça / Okunuş / Anlam çipleri, sayfa
   sayfa çevirme, sürüklenebilir yuvarlak sayaç, Aa yazı boyutu
 - **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız
