@@ -627,13 +627,30 @@ function counterPage(id) {
   const soundVal = h('div.sec', { style: { fontSize: '12.5px' } }), vibVal = h('div.sec', { style: { fontSize: '12.5px' } });
   const flash = h('div.flash', { style: { background: color } });
   let shown = state.ctext;
+  // Metin karti: sagdaki ok karti acar/kapatir; acikken karta dokunmak metni degistirir,
+  // kapaliyken acar. Secim butun kayitlarda hatirlanir.
+  const toggleText = () => { state.open.counter = state.open.counter === false; save(); paintText(); };
+  const ctChev = h('span.chev');
+  const ctToggle = h('button.ct-toggle', { onclick: (ev) => { ev.stopPropagation(); toggleText(); }, 'aria-label': 'Metni aç / kapat' }, ctChev);
+  const tapText = () => {
+    if (state.open.counter === false) { toggleText(); return; }
+    state.ctext = (shown + 1) % 3; save(); paintText();
+  };
+  const ctCard = h('div.card.ctext', {
+    role: 'button', tabindex: '0', onclick: tapText,
+    onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tapText(); } }
+  }, h('div.row', null, h('div.grow', null, ctLabel), ctToggle), ctBody);
 
   function paintText() {
     const fields = [e.arabic, e.reading, e.meaning];
     let mode = state.ctext;
     for (let i = 0; i < 3 && !fields[mode]; i++) mode = (mode + 1) % 3;
     shown = mode;
-    ctLabel.textContent = ['Arapça', 'Okunuş', 'Anlam'][mode] + '  ·  dokun: değiştir';
+    const open = state.open.counter !== false;
+    ctBody.hidden = !open;
+    ctChev.textContent = open ? '▾' : '▸';
+    ctToggle.setAttribute('aria-expanded', String(open));
+    ctLabel.textContent = ['Arapça', 'Okunuş', 'Anlam'][mode] + (open ? '  ·  dokun: değiştir' : '  ·  gizli');
     ctBody.textContent = fields[mode] || '';
     ctBody.className = 'body' + (mode === 0 ? ' ar' : '');
     ctBody.style.fontSize = mode === 0 ? (state.ar * 0.8) + 'px' : (state.tx * 0.9) + 'px';
@@ -712,7 +729,7 @@ function counterPage(id) {
       h('div.card', null, h('div.label', null, 'Tur'), roundVal, roundSub),
       h('div.card', null, h('div.label', null, 'Toplam'), totalVal, h('div.sec', { style: { fontSize: '13px' } }, 'adet'))),
     todayLine,
-    h('button.card.ctext', { onclick: () => { state.ctext = (shown + 1) % 3; save(); paintText(); } }, ctLabel, ctBody),
+    ctCard,
     stage,
     t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
     h('div.round-btns', null,
