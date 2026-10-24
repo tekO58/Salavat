@@ -21,6 +21,10 @@ Web'de eklenip Android'e henüz taşınmayanlar:
 - Okuma modu (⧉ Küçült): tespih köşede yuvarlak sayaca döner, metin ekranı kaplar
 - Yeni bölüm için renkli emoji simgeler; Zikirler simgesi ✨
 - Tespih: büyütülmüş halka (0.35 / 0.45)
+- **Vird rutini**: Sabah / Öğle / İkindi / Akşam / Yatsı listeleri, sırayla okuma,
+  bitince sıradakine geçiş, sayaçsız kalemde "Okudum"; kayıt sayfasında 📅 Virde ekle
+- **Okuma sayfası** (mushaf): kâğıt zemin, Arapça / Okunuş / Anlam çipleri, sayfa
+  sayfa çevirme, sürüklenebilir yuvarlak sayaç, Aa yazı boyutu
 - **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız
   Android'de mümkün; `workplanner-app`'teki `TasbihFloatService` ve
   `TasbihBubbleView` taşınacak

@@ -26,12 +26,19 @@ let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000 };
+  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null };
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
   } catch (e) { return empty; }
 }
+/** Vakit rutinleri: ilk aciliste bos bes liste. */
+const DEFAULT_ROUTINES = [
+  { id: 'sabah', name: 'Sabah', icon: '🌅' }, { id: 'ogle', name: 'Öğle', icon: '☀️' },
+  { id: 'ikindi', name: 'İkindi', icon: '🌇' }, { id: 'aksam', name: 'Akşam', icon: '🌙' }, { id: 'yatsi', name: 'Yatsı', icon: '🌌' }
+];
+if (!Array.isArray(state.routines)) state.routines = DEFAULT_ROUTINES.map((r) => Object.assign({ items: [] }, r));
+
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast('Kaydedilemedi: tarayıcı depolaması kapalı olabilir'); }
 }
@@ -246,6 +253,25 @@ function askNumber(title, msg, current, onValue) {
   setTimeout(() => input.focus(), 50);
 }
 
+/** Yazi boyutu: A− / A+ (Arapca ve Turkce birlikte); her degisiklikte onChange. */
+function fontDialog(onChange) {
+  let o;
+  const label = h('div.sec', { style: { textAlign: 'center', margin: '8px 0' } });
+  const paint = () => { label.textContent = `Arapça ${Math.round(state.ar)} · Türkçe ${Math.round(state.tx)}`; };
+  const step = (d) => {
+    state.ar = Math.min(44, Math.max(12, state.ar + d * 2));
+    state.tx = Math.min(30, Math.max(12, state.tx + d * 1.5));
+    save(); applySizes(); paint(); if (onChange) onChange();
+  };
+  paint();
+  o = overlay(h('div.dialog', null, h('h2', null, 'Yazı boyutu'),
+    h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
+      h('button.secondary', { onclick: () => step(-1), style: { minWidth: '90px', fontSize: '18px' } }, 'A−'),
+      h('button.secondary', { onclick: () => step(+1), style: { minWidth: '90px', fontSize: '22px' } }, 'A+')),
+    label,
+    h('div.actions', null, h('button.ok', { onclick: () => o.remove() }, 'Tamam'))));
+}
+
 /** Yeni bolum: ad, simge, renk. */
 function askNewSection(onCreated) {
   let icon = SECTION_ICONS[0], color = SECTION_COLORS[0], o;
@@ -305,6 +331,153 @@ function foldCard(key, label, body, plain) {
   return el;
 }
 
+/* --------------------------------------------------------- vird rutini */
+
+/*
+ * Rutin: bir vakitte sirayla okunanlar (Sabah, Ogle ...). Her kalem bir kayit ve
+ * o vakitteki okuma sayisi (0 = sayacsiz, "Okudum" ile biter). Bugun tamam mi:
+ * sayacli kalemde bugunku okuma sayisi hedefe ulastiysa, sayacsizda "Okudum".
+ */
+const routineOf = (id) => state.routines.find((r) => r.id === id);
+const liveItems = (r) => r.items.filter((it) => entryOf(it.entryId));
+function itemDone(it) {
+  if (it.target > 0) return todayOf(it.entryId) >= it.target;
+  return !!(state.readDone[dayKey()] || {})[it.entryId];
+}
+function routineStats(r) {
+  const items = liveItems(r);
+  const done = items.filter(itemDone).length;
+  return { items, done, total: items.length, next: items.find((it) => !itemDone(it)) || null };
+}
+/** Su anki vakit (saate gore). */
+function currentRoutineId() {
+  const hour = new Date().getHours();
+  if (hour < 4 || hour >= 21) return 'yatsi';
+  return hour < 11 ? 'sabah' : hour < 15 ? 'ogle' : hour < 18 ? 'ikindi' : 'aksam';
+}
+let selectedRoutine = null;
+
+/** Kalemi acar: sayacli ise tespih (bugun ilk kez acildiysa sayac sifirdan), degilse okuma sayfasi. */
+function openRoutineItem(r, it, replace) {
+  const e = entryOf(it.entryId);
+  if (!e) return;
+  const route = it.target > 0 ? `#/c/${e.id}?r=${r.id}` : `#/e/${e.id}?r=${r.id}`;
+  if (it.target > 0) {
+    const t = tasbihFor(e);
+    if (todayOf(e.id) === 0 || isDone(t) || t.target !== it.target) TasbihCore.resetCounter(t);
+    t.target = it.target;
+    t.onTarget = 'stop';
+    save();
+  }
+  if (replace) replaceRoute(route, true); else go(route);
+}
+function continueRoutine(r) {
+  const st = routineStats(r);
+  if (!st.total) { toast('Önce bu vakte kayıt ekle'); return; }
+  if (!st.next) { toast(`${r.icon} ${r.name} virdi bugün tamam ✓`); return; }
+  openRoutineItem(r, st.next);
+}
+/** Kalem bitince sıradakine gecer; hepsi bittiyse ana ekrana doner. */
+function advanceRoutine(r) {
+  const st = routineStats(r);
+  if (st.next) { toast('Sıradaki: ' + entryOf(st.next.entryId).name); openRoutineItem(r, st.next, true); }
+  else { toast(`${r.icon} ${r.name} virdi tamamlandı ✓`); vib([0, 300, 120, 300]); replaceRoute('#/', true); }
+}
+function markRead(r, entryId) {
+  const day = dayKey();
+  state.readDone[day] = Object.assign({}, state.readDone[day], { [entryId]: true });
+  // Yalniz son 14 gun tutulur.
+  Object.keys(state.readDone).sort().slice(0, -14).forEach((d) => delete state.readDone[d]);
+  save();
+}
+
+/** Rutin icin okuma sayisi secimi. */
+function askRoutineTarget(e, current, onValue) {
+  const presets = [...new Set([e.target, 33, 100].filter((v) => v > 0))];
+  choose('Okuma sayısı · ' + e.name, [{ label: 'Sayaçsız (okudum ✓)', on: current === 0, fn: () => onValue(0) }]
+    .concat(presets.map((v) => ({ label: num(v), on: current === v, fn: () => onValue(v) })))
+    .concat([{ label: 'Özel…', fn: () => askNumber('Okuma sayısı', 'Bu vakitte kaç kere?', current > 0 ? current : '', onValue) }]));
+}
+
+/** Rutine kayit ekleme: aranabilir liste, sonra okuma sayisi. */
+function pickForRoutine(r, onAdded) {
+  let o, query = '';
+  const list = h('div', { style: { maxHeight: '52dvh', overflowY: 'auto' } });
+  const search = h('input.search', { type: 'search', placeholder: '🔍  Ara…' });
+  const paint = () => {
+    const items = entries().filter((e) => matches(e, query));
+    list.replaceChildren(...items.map((e) => {
+      const s = sectionOf(e.section);
+      return h('button.list-row', { onclick: () => {
+        o.remove();
+        askRoutineTarget(e, e.target, (v) => { r.items.push({ entryId: e.id, target: v }); save(); toast(`${r.icon} ${r.name}: ${e.name} eklendi`); if (onAdded) onAdded(); });
+      } }, h('span.strip', { style: { background: s ? s.color : '#E8B34A' } }),
+        h('div.grow', null, h('div.nm', null, e.name), h('div.sub.sec', null, s ? s.name : '')));
+    }));
+  };
+  search.addEventListener('input', () => { query = search.value; paint(); });
+  paint();
+  o = overlay(h('div.dialog', null, h('h2', null, `${r.icon} ${r.name} virdine ekle`), search, list,
+    h('div.actions', null, h('button.cancel', { onclick: () => o.remove() }, 'Vazgeç'))));
+}
+
+/** Kayit sayfasindan: hangi vakte? */
+function addToRoutine(e) {
+  choose('Hangi vakte eklensin?', state.routines.map((r) => ({
+    label: `${r.icon}  ${r.name}` + (r.items.some((it) => it.entryId === e.id) ? '  (zaten var)' : ''),
+    fn: () => askRoutineTarget(e, e.target, (v) => { r.items.push({ entryId: e.id, target: v }); save(); toast(`${r.icon} ${r.name}: eklendi`); })
+  })));
+}
+
+/** Rutin kalemi menusu: okuma sayisi, sira, cikar. */
+function routineItemMenu(r, it, onChanged) {
+  const e = entryOf(it.entryId), i = r.items.indexOf(it);
+  const move = (d) => { const j = i + d; if (j < 0 || j >= r.items.length) return; [r.items[i], r.items[j]] = [r.items[j], r.items[i]]; save(); onChanged(); };
+  choose(e.name, [
+    { label: `🎯  Okuma sayısı: ${it.target > 0 ? num(it.target) : 'sayaçsız'}`, fn: () => askRoutineTarget(e, it.target, (v) => { it.target = v; save(); onChanged(); }) },
+    { label: '⬆️  Yukarı taşı', fn: () => move(-1) },
+    { label: '⬇️  Aşağı taşı', fn: () => move(+1) },
+    { label: '📖  Metni aç', fn: () => go('#/e/' + e.id) },
+    { label: '🗑️  Bu vakitten çıkar', fn: () => { r.items.splice(i, 1); save(); onChanged(); } }
+  ]);
+}
+
+/** Ana ekrandaki vird bolumu (C): vakit cipleri, sirali liste, Devam et. */
+function routineSection() {
+  const box = h('div.routine');
+  const paint = () => {
+    const r = routineOf(selectedRoutine || currentRoutineId()) || state.routines[0];
+    selectedRoutine = r.id;
+    const st = routineStats(r);
+    const chipsRow = h('div.chips', null, state.routines.map((x) => {
+      const xs = routineStats(x);
+      return chip(`${x.icon} ${x.name}` + (xs.total ? `  ${xs.done}/${xs.total}` : ''), x.id === r.id, null, () => { selectedRoutine = x.id; paint(); });
+    }));
+    const rows = st.items.map((it, n) => {
+      const e = entryOf(it.entryId), s = sectionOf(e.section), done = itemDone(it), isNext = st.next === it;
+      const mark = done ? h('span.rmark.done', null, '✓') : h('span.rmark' + (isNext ? '.now' : ''), null, String(n + 1));
+      const sub = (s ? s.name + ' · ' : '') + (it.target > 0 ? `${num(Math.min(todayOf(e.id), it.target))} / ${num(it.target)}` : 'okuma');
+      return h('div.rrow' + (done ? '.done' : ''), null,
+        h('button.rmain', { onclick: () => openRoutineItem(r, it) }, mark,
+          h('div.grow', null, h('div.nm', null, e.name), h('div.sec', { style: { fontSize: '12.5px' } }, sub)),
+          h('span.muted', { style: { fontSize: '12.5px' } }, done ? '' : isNext ? 'şimdi' : 'sırada')),
+        h('button.icon-btn', { onclick: () => routineItemMenu(r, it, paint), 'aria-label': 'Seçenekler' }, '⋮'));
+    });
+    box.replaceChildren(
+      h('div.row.mb8', null, h('div.grow', null, h('div.label', null, 'Vird'),
+        h('div', { style: { fontSize: '20px', fontWeight: 700 } }, `${r.icon} ${r.name}`)),
+        st.total ? h('span.sec', { style: { fontSize: '13px' } }, `${st.done} / ${st.total} tamam`) : null),
+      chipsRow,
+      st.total ? h('div.rsegs', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? '#7FBF8C' : st.next === it ? '#E8B34A' : '#26314D' } }))) : null,
+      h('div.rlist', null, rows,
+        h('button.radd', { onclick: () => pickForRoutine(r, paint) }, st.total ? '＋ Virde ekle' : `＋ ${r.name} vaktinde okuduklarını ekle`)),
+      st.total ? h('button.primary', { onclick: () => continueRoutine(r), disabled: !st.next },
+        st.next ? `▶ ${r.name} virdine ${st.done ? 'devam et' : 'başla'} (${st.total - st.done} kaldı)` : `✓ ${r.name} virdi bugün tamam`) : null);
+  };
+  paint();
+  return box;
+}
+
 /* --------------------------------------------------------------- pano */
 
 function ring(progress, color) {
@@ -352,6 +525,8 @@ function home() {
       lt && lt.count > 0 && !isDone(lt) ? h('button.card.resume', { style: { width: '100%', textAlign: 'left' }, onclick: () => go('#/c/' + last.id) },
         h('div.grow', null, h('div.label', null, 'Kaldığın yer'), h('div.ellipsis', { style: { fontWeight: 700, fontSize: '16px' } }, `${last.name} · ${num(lt.count)}/${num(lt.target)}`)),
         h('span.acc', { style: { color: 'var(--accent)', fontWeight: 700 } }, 'Devam ▶')) : null,
+      routineSection(),
+      h('div.label', { style: { margin: '22px 0 8px' } }, 'Kütüphane'),
       h('div.tiles', null, tiles),
       h('div.label.mb8', null, 'Favoriler'),
       favs.length ? h('div.chips', null, favs.map((e) => chip('★ ' + e.name, false, (sectionOf(e.section) || {}).color, () => go('#/e/' + e.id))))
@@ -413,10 +588,17 @@ function sectionPage(filter) {
 
 /* -------------------------------------------------------- kayit sayfasi */
 
-function entryPage(id) {
+function entryPage(id, params) {
   const e = entryOf(id);
   if (!e) { toast('Kayıt bulunamadı'); go('#/'); return; }
   const s = sectionOf(e.section);
+  const routine = params && params.get('r') ? routineOf(params.get('r')) : null;
+  const routineItem = routine && liveItems(routine).find((it) => it.entryId === e.id);
+  const routineHasCounter = !!(routineItem && routineItem.target > 0);
+  const routineSub = routine ? (() => {
+    const st = routineStats(routine);
+    return `${routine.icon} ${routine.name} virdi · ${st.items.indexOf(routineItem) + 1} / ${st.total}`;
+  })() : '';
   const star = h('button.icon-btn');
   const paintStar = () => { const on = state.fav.includes(e.id); star.textContent = on ? '★' : '☆'; star.style.color = on ? 'var(--accent)' : ''; };
   star.addEventListener('click', () => {
@@ -462,6 +644,7 @@ function entryPage(id) {
 
   app.replaceChildren(h('div.page', null,
     h('div.head', null, h('button.icon-btn.back', { onclick: back }, '‹'), h('div.title', null, e.name), star,
+      h('button.icon-btn', { onclick: () => addToRoutine(e), 'aria-label': 'Virde ekle', title: 'Virde ekle' }, '📅'),
       h('button.icon-btn', { onclick: () => size(-1), style: { fontSize: '16px' }, 'aria-label': 'Yazıyı küçült' }, 'A−'),
       h('button.icon-btn', { onclick: () => size(+1), style: { fontSize: '18px' }, 'aria-label': 'Yazıyı büyüt' }, 'A+'),
       e.user ? h('button.icon-btn', { onclick: menu }, '⋮') : null),
@@ -473,8 +656,13 @@ function entryPage(id) {
       e.meaning ? fold('meaning', 'Anlamı', h('div.meaning-text.sec', null, e.meaning)) : null,
       origin ? fold('source', 'Kaynak', h('div.sec', { style: { fontSize: '13.5px', whiteSpace: 'pre-line' } }, origin)) : null,
       !e.verified && !e.user ? h('p.warn', { style: { fontSize: '12.5px' } }, '⚠ Bu metin henüz ikinci bir kaynakla harf harf karşılaştırılmadı.') : null),
-    h('div.bottom-bar', null, stats, targets,
-      h('button.primary', { onclick: () => { tasbihFor(e); go('#/c/' + e.id); }, style: { background: s ? s.color : 'var(--accent)' } }, '📿  Tespihle oku'))));
+    routine && !routineHasCounter
+      // Vird rutininde sayacsiz kalem: okuyunca "Okudum", siradakine gecer.
+      ? h('div.bottom-bar', null,
+        h('div.sec.ellipsis', { style: { fontSize: '13px' } }, routineSub),
+        h('button.primary', { onclick: () => { markRead(routine, e.id); vib(30); advanceRoutine(routine); }, style: { background: '#7FBF8C' } }, '✓ Okudum, sıradakine geç'))
+      : h('div.bottom-bar', null, stats, targets,
+        h('button.primary', { onclick: () => { tasbihFor(e); go('#/c/' + e.id); }, style: { background: s ? s.color : 'var(--accent)' } }, '📿  Tespihle oku'))));
   paint();
 }
 
@@ -643,7 +831,7 @@ function miniCounter(m, onTap) {
   };
 }
 
-function counterPage(id) {
+function counterPage(id, params) {
   const e = entryOf(id);
   if (!e) { toast('Kayıt bulunamadı'); go('#/'); return; }
   const t = tasbihFor(e);
@@ -661,7 +849,28 @@ function counterPage(id) {
   const readMode = !!state.readMode;
   const rosary = readMode ? null : Rosary.create(mat, () => count());
   const stage = rosary ? h('div.stage', null, rosary.el) : null;
-  const mini = readMode ? miniCounter(mat, () => count()) : null;
+  // Okuma sayfasindaki balon surukleyince sayma yapmasin.
+  let bubbleDragged = false;
+  const mini = readMode ? miniCounter(mat, () => { if (bubbleDragged) { bubbleDragged = false; return; } count(); }) : null;
+  // Vird rutininden acildiysa: hangi vakit, kacinci kalem, sirada ne var.
+  const routine = params && params.get('r') ? routineOf(params.get('r')) : null;
+  const routineBar = () => {
+    const st = routineStats(routine);
+    return h('div.rsegs.tight', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? '#7FBF8C' : it.entryId === id ? '#E8B34A' : '#26314D' } })));
+  };
+  const routineSub = () => {
+    const st = routineStats(routine);
+    const idx = st.items.findIndex((it) => it.entryId === id);
+    return `${routine.icon} ${routine.name} virdi · ${idx + 1} / ${st.total}`;
+  };
+  const nextLine = h('div.next-line');
+  const paintNext = () => {
+    if (!routine) return;
+    const st = routineStats(routine);
+    const after = st.items.find((it) => it.entryId !== id && !itemDone(it));
+    nextLine.replaceChildren(after ? h('span', null, h('span.muted', null, 'Bitince geçer → '), h('b', null, entryOf(after.entryId).name))
+      : h('span.muted', null, 'Bu vaktin son kaydı'));
+  };
   const soundVal = h('div.sec', { style: { fontSize: '12.5px' } }), vibVal = h('div.sec', { style: { fontSize: '12.5px' } });
   const flash = h('div.flash', { style: { background: color } });
   /*
@@ -695,6 +904,8 @@ function counterPage(id) {
       rosary.setPulled(t.total, animated);
     }
     if (mini) mini.set(t.count, t.target, isDone(t), animated);
+    if (pageInfo) pageInfo();
+    paintNext();
     soundVal.textContent = t.sound ? 'Açık' : 'Kapalı';
     vibVal.textContent = t.every === 0 ? 'Kapalı' : t.every === 1 ? 'Her adette' : `Her ${t.every} adette`;
   }
@@ -732,6 +943,10 @@ function counterPage(id) {
       flash.style.transition = 'none'; flash.style.opacity = '0.3';
       requestAnimationFrame(() => { flash.style.transition = ''; flash.style.opacity = '0'; });
       toast(t.onTarget === 'stop' ? 'Tamamlandı ✓' : 'Tur tamamlandı ✓');
+      // Vird rutininde: kisa bir an sonra siradakine gecilir.
+      if (routine && itemDone(routineStats(routine).items.find((it) => it.entryId === id) || { entryId: id, target: t.target })) {
+        setTimeout(() => { if (route().startsWith('#/c/' + id)) advanceRoutine(routine); }, 900);
+      }
     } else if (ev === 'milestone') { vib(t.every > 1 ? 60 : 25); if (t.sound) beep(false); }
     else if (t.sound) beep(false);
     paint(true);
@@ -761,26 +976,116 @@ function counterPage(id) {
     } }
   ]);
 
+  let pageInfo = null;
   const undoTap = () => { if (undo(id)) { vib(20); paint(true); } else toast('Geri alınacak bir şey yok'); };
   const toggleRead = () => { state.readMode = !readMode; save(); render(); };
-  const header = h('div.row', { style: { height: '44px', flex: 'none' } },
+  const subLineEl = h('div.muted.ellipsis', { style: { fontSize: '12px', fontWeight: 400 } });
+  const header = h('div.row', { style: { minHeight: '44px', flex: 'none' } },
     h('button.icon-btn.back', { onclick: back }, '‹'),
-    h('div.grow.ellipsis', { style: { textAlign: 'center', fontSize: '20px', fontWeight: 700 } }, e.name),
+    h('div.grow', { style: { textAlign: 'center', minWidth: 0 } },
+      h('div.ellipsis', { style: { fontSize: readMode ? '17px' : '20px', fontWeight: 700 } }, e.name), subLineEl),
+    readMode ? h('button.icon-btn', { onclick: () => fontDialog(() => layoutPages()), 'aria-label': 'Yazı boyutu', style: { fontSize: '17px' } }, 'Aa') : null,
     h('button.icon-btn', { onclick: toggleRead, 'aria-label': readMode ? 'Tespihe dön' : 'Küçült: okuma modu', title: readMode ? 'Tespihe dön' : 'Küçült' }, readMode ? '📿' : '⧉'),
     h('button.icon-btn', { onclick: menu }, '⋮'));
+  subLineEl.textContent = routine ? routineSub() : '';
+  subLineEl.hidden = !routine && !readMode;
 
   if (readMode) {
-    // Okuma modu: solda sayi ve sure, sagda yuvarlak sayac (dokun: +1); altta metin.
+    /*
+     * Okuma sayfasi (A): kagit zemin, Arapca / Okunus / Anlam ciplerle acilip
+     * kapanir; uzun metin sayfalara bolunur, yana kaydirarak cevrilir. Sayac
+     * surukelenebilir yuvarlak balon; altta ilerleme ve sure.
+     */
+    const pages = h('div.pages');
+    const paper = h('div.paper', null, pages);
+    const pageNo = h('span.page-no');
+    const chipsBox = h('div.paper-chips');
+    const partsDef = [['arabic', 'Arapça', e.arabic], ['reading', 'Okunuş', e.reading], ['meaning', 'Anlam', e.meaning]].filter((x) => x[2]);
+    const paintPages = () => {
+      chipsBox.replaceChildren(...partsDef.map(([key, label]) => chip(label, state.open[key] !== false, color, () => {
+        const on = state.open[key] !== false;
+        // En az biri acik kalsin.
+        if (on && partsDef.filter(([k]) => state.open[k] !== false).length === 1) { toast('En az biri açık kalmalı'); return; }
+        state.open[key] = !on; save(); paintPages();
+      })));
+      const shown = partsDef.filter(([k]) => state.open[k] !== false);
+      pages.replaceChildren(...shown.map(([key, , text], i) => h('div.p-part' + (i ? '.ruled' : ''), null,
+        h('div.p-' + key + (key === 'arabic' ? '.ar' : ''), null, text))));
+      layoutPages();
+    };
+    let stride = 1, pageCount = 1;
+    function layoutPages() {
+      // Sutun genisligi = sayfa genisligi; her sutun bir sayfa.
+      const w = pages.clientWidth;
+      if (!w) return;
+      pages.style.columnWidth = w + 'px';
+      stride = w + 32;
+      pageCount = Math.max(1, Math.round((pages.scrollWidth + 32) / stride));
+      pageInfo();
+    }
+    pageInfo = () => {
+      const cur = Math.min(pageCount, Math.round(pages.scrollLeft / stride) + 1);
+      pageNo.textContent = pageCount > 1 ? `Sayfa ${cur} / ${pageCount}` : '';
+      subLineEl.textContent = [routine ? routineSub() : '', pageCount > 1 ? `Sayfa ${cur} / ${pageCount}` : '', `${num(t.count)} / ${num(t.target)}`].filter(Boolean).join(' · ');
+    };
+    const turn = (d) => {
+      const cur = Math.round(pages.scrollLeft / stride);
+      pages.scrollTo({ left: Math.max(0, Math.min(pageCount - 1, cur + d)) * stride, behavior: 'smooth' });
+    };
+    // Yana kaydirma birakilinca en yakin sayfaya oturur.
+    let snapTimer = null;
+    pages.addEventListener('scroll', () => {
+      pageInfo();
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(() => {
+        const target = Math.round(pages.scrollLeft / stride) * stride;
+        if (Math.abs(target - pages.scrollLeft) > 2) pages.scrollTo({ left: target, behavior: 'smooth' });
+      }, 120);
+    });
+    window.addEventListener('resize', layoutPages, { once: true });
+
+    const progress = h('div.read-progress', null, h('span'));
+    const bubble = h('div.bubble', null, mini.el);
+    // Balon: surukle ve birak; konum hatirlanir (ekran oranina gore).
+    let drag = null;
+    bubble.addEventListener('pointerdown', (ev) => { drag = { x: ev.clientX, y: ev.clientY, l: bubble.offsetLeft, t: bubble.offsetTop, moved: false }; });
+    bubble.addEventListener('pointermove', (ev) => {
+      if (!drag) return;
+      const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 8) return;
+      drag.moved = true; bubbleDragged = true;
+      try { bubble.setPointerCapture(ev.pointerId); } catch (err) {}
+      const host = bubble.parentElement.getBoundingClientRect();
+      const l = Math.max(0, Math.min(host.width - bubble.offsetWidth, drag.l + dx));
+      const tp = Math.max(0, Math.min(host.height - bubble.offsetHeight, drag.t + dy));
+      Object.assign(bubble.style, { left: l + 'px', top: tp + 'px', right: 'auto', bottom: 'auto' });
+      state.bubble = { x: l / host.width, y: tp / host.height };
+    });
+    bubble.addEventListener('pointerup', () => { if (drag && drag.moved) save(); drag = null; });
+
     app.replaceChildren(h('div.counter.read', null,
       header,
-      h('div.read-top', null,
-        h('div.card.grow.read-stats', null,
-          h('div.label', null, 'Tur · Toplam'),
-          h('div', null, roundVal, h('span.sec', null, ' tur  ·  '), totalVal, h('span.sec', null, ' adet')),
-          roundSub, timeLine),
-        h('div.mini-col', null, mini.el, h('button.mini-undo', { onclick: undoTap }, '↶ Geri al'))),
-      reader,
+      routine ? routineBar() : null,
+      chipsBox,
+      h('div.paper-wrap', null, paper, bubble),
+      h('div.read-bottom', null,
+        progress,
+        h('div.row', { style: { gap: '8px', marginTop: '6px' } },
+          h('div.grow.muted', { style: { fontSize: '12.5px' } }, timeLine),
+          h('button.mini-undo', { onclick: undoTap }, '↶ Geri al'),
+          h('button.page-btn', { onclick: () => turn(-1), 'aria-label': 'Önceki sayfa' }, '‹'),
+          pageNo,
+          h('button.page-btn', { onclick: () => turn(1), 'aria-label': 'Sonraki sayfa' }, '›')),
+        routine ? nextLine : null),
       flash));
+    if (state.bubble) {
+      const host = bubble.parentElement.getBoundingClientRect();
+      Object.assign(bubble.style, { left: (state.bubble.x * host.width) + 'px', top: (state.bubble.y * host.height) + 'px', right: 'auto', bottom: 'auto' });
+    }
+    const paintProgress = () => { progress.firstChild.style.width = Math.min(100, 100 * t.count / t.target) + '%'; progress.firstChild.style.background = color; };
+    const basePageInfo = pageInfo;
+    pageInfo = () => { basePageInfo(); paintProgress(); };
+    paintPages();
   } else {
     app.replaceChildren(h('div.counter', null,
       header,
@@ -788,6 +1093,7 @@ function counterPage(id) {
         h('div.card', null, h('div.label', null, 'Tur'), roundVal, roundSub),
         h('div.card', null, h('div.label', null, 'Toplam'), totalVal, h('div.sec', { style: { fontSize: '13px' } }, 'adet'))),
       timeLine,
+      routine ? routineBar() : null,
       reader,
       stage,
       t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
@@ -800,6 +1106,7 @@ function counterPage(id) {
           h('span', { style: { fontSize: '17px' } }, '🔊'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Ses'), soundVal), h('span.muted', null, '›')),
         h('button.card', { onclick: pickEvery },
           h('span', { style: { fontSize: '17px' } }, '📳'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Titreşim'), vibVal), h('span.muted', null, '›'))),
+      routine ? nextLine : null,
       h('button.plus1', { onclick: count, style: { background: color, border: `1px solid ${mix(color, '#FFFFFF', 0.7)}` } },
         h('b', null, '+1'), h('span', { style: { fontSize: '12.5px' } }, 'Dokun, say')),
       flash));
@@ -828,9 +1135,9 @@ function render() {
   applySizes();
   window.scrollTo(0, 0);
   if (page === 's') sectionPage(arg ? decodeURIComponent(arg) : '_all');
-  else if (page === 'e') entryPage(decodeURIComponent(arg || ''));
+  else if (page === 'e') entryPage(decodeURIComponent(arg || ''), params);
   else if (page === 'add') addPage(params);
-  else if (page === 'c') counterPage(decodeURIComponent(arg || ''));
+  else if (page === 'c') counterPage(decodeURIComponent(arg || ''), params);
   else home();
 }
 
