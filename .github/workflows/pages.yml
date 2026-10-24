@@ -45,7 +45,7 @@ jobs:
           rm -rf _site/test
           cp app/src/main/assets/salavat.json _site/
           # Yeni yayinda telefondaki onbellek yenilensin.
-          sed -i "s/salavat-v1/salavat-${GITHUB_SHA::7}/" _site/sw.js
+          sed -i "s/salavat-v[0-9]*/salavat-${GITHUB_SHA::7}/" _site/sw.js
 
       - uses: actions/configure-pages@v5
 
