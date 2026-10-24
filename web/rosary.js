@@ -172,6 +172,8 @@
     // Bosluk sagda, yataydan biraz asagida; bosluk sonu buradan baslar.
     const gapEndDeg = 18 + L.GAP_W * unitDeg / 2;
     const pullPx = (opts && opts.pullPx) || 56;
+    // Ilerleme halkasi uygulamanin vurgu renginde (verilmezse materyalin).
+    const accent = (opts && opts.accent) || m.accent;
     const d = defsFor(m);
     const ns = 'http://www.w3.org/2000/svg';
     const wrap = document.createElement('div');
@@ -179,12 +181,12 @@
     const circ = 2 * Math.PI * progR;
     wrap.innerHTML = `<svg viewBox="0 0 ${S} ${S}" overflow="visible" role="img" aria-label="Tespih">
       <defs>${d.defs}</defs>
-      <circle cx="${cx}" cy="${cy}" r="${progR}" fill="none" stroke="#26314D" stroke-width="${f(S * 0.022)}"/>
-      <circle class="arc" cx="${cx}" cy="${cy}" r="${progR}" fill="none" stroke="${m.accent}" stroke-width="${f(S * 0.022)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" stroke-dasharray="0 ${f(circ)}"/>
-      <circle cx="${cx}" cy="${cy}" r="${f(ringR)}" fill="none" stroke="${mixHex(METALS[m.metal][1], '#12172B', 0.5)}" stroke-width="${f(Math.max(1, S * 0.004))}"/>
+      <circle cx="${cx}" cy="${cy}" r="${progR}" fill="none" style="stroke:var(--stroke)" stroke-width="${f(S * 0.022)}"/>
+      <circle class="arc" cx="${cx}" cy="${cy}" r="${progR}" fill="none" stroke="${accent}" stroke-width="${f(S * 0.022)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" stroke-dasharray="0 ${f(circ)}"/>
+      <circle cx="${cx}" cy="${cy}" r="${f(ringR)}" fill="none" stroke="${METALS[m.metal][1]}" stroke-opacity=".5" stroke-width="${f(Math.max(1, S * 0.004))}"/>
       <g class="beads"></g>
-      <text class="cnt" x="${cx}" fill="#F2EFE6" font-weight="700" text-anchor="middle"></text>
-      <text class="tgt" x="${cx}" y="${f(cy + S * 0.09)}" fill="#AEB5CF" font-size="${f(S * 0.05)}" text-anchor="middle"></text>
+      <text class="cnt" x="${cx}" style="fill:var(--text)" font-weight="700" text-anchor="middle"></text>
+      <text class="tgt" x="${cx}" y="${f(cy + S * 0.09)}" style="fill:var(--text2)" font-size="${f(S * 0.05)}" text-anchor="middle"></text>
       <text class="nm" x="${cx}" y="${f(cy + S * 0.165)}" font-weight="700" text-anchor="middle"></text>
     </svg>`;
     const g = wrap.querySelector('.beads'), arc = wrap.querySelector('.arc');

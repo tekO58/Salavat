@@ -1,21 +1,48 @@
-/* Renkler Android'deki AppColors ile ayni. Simdilik yalnizca koyu tema. */
+/* Renk temalari: koyu "Gece zumrudu" (varsayilan) ve acik "Gunduz" (data-theme="light").
+   app.js'teki THEMES ile ayni. */
 :root {
-  --bg: #12172B;
-  --card: #151D32;
-  --field: #0E1526;
-  --elevated: #1A2440;
-  --stroke: #26314D;
-  --stroke-strong: #333A55;
-  --text: #F2EFE6;
-  --text2: #AEB5CF;
-  --muted: #8790AD;
-  --accent: #E8B34A;
-  --on-accent: #111522;
-  --success: #7FBF8C;
-  --warning: #C79A46;
+  --bg: #0A1414;
+  --card: #111F1E;
+  --field: #0B1817;
+  --elevated: #16302C;
+  --stroke: #1F3633;
+  --stroke-strong: #2A4743;
+  --text: #EEF5F1;
+  --text2: #A9C2BA;
+  --muted: #7C9790;
+  --accent: #2FC495;
+  --on-accent: #04130E;
+  --success: #5FD39A;
+  --warning: #E2B65C;
+  --danger: #F07A6E;
+  --toast: #2A4743;
+  --toast-text: #EEF5F1;
+  --shadow: rgba(0, 0, 0, .55);
+  --scrim: rgba(0, 0, 0, .6);
   --ar-size: 26px;
   --tx-size: 16px;
   color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #F3F5F7;
+  --card: #FFFFFF;
+  --field: #EEF1F4;
+  --elevated: #FFFFFF;
+  --stroke: #DDE3EA;
+  --stroke-strong: #C9D1DB;
+  --text: #16202C;
+  --text2: #4A5868;
+  --muted: #6B7886;
+  --accent: #0F8F6E;
+  --on-accent: #FFFFFF;
+  --success: #1F9D5C;
+  --warning: #B7791F;
+  --danger: #C53030;
+  --toast: #16202C;
+  --toast-text: #F3F5F7;
+  --shadow: rgba(22, 32, 44, .18);
+  --scrim: rgba(22, 32, 44, .45);
+  color-scheme: light;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { background: var(--bg); color: var(--text); }
@@ -52,7 +79,7 @@ input, textarea { font: inherit; color: var(--text); }
 .plus { width: 42px; height: 42px; border-radius: 21px; background: var(--accent); color: var(--on-accent); font-size: 28px; line-height: 1; display: flex; align-items: center; justify-content: center; margin-left: 6px; flex: none; }
 .today { display: flex; align-items: center; padding: 14px; gap: 14px; margin-bottom: 12px; }
 .today .big { font-size: 22px; font-weight: 700; }
-.resume { display: flex; align-items: center; padding: 12px 14px; margin-bottom: 14px; border-color: #7a6436; }
+.resume { display: flex; align-items: center; padding: 12px 14px; margin-bottom: 14px; border-color: color-mix(in srgb, var(--accent) 45%, var(--stroke)); }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .tile { text-align: left; border-radius: 16px; padding: 12px 14px; min-height: 128px; display: flex; flex-direction: column; border: 1px solid; }
 .tile .ic { font-size: 24px; }
@@ -73,7 +100,7 @@ input, textarea { font: inherit; color: var(--text); }
 .list-row .sub { font-size: 12px; }
 .list-row .ar { width: 42%; max-width: 170px; font-size: 17px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; }
 .empty { text-align: center; color: var(--muted); margin-top: 40px; white-space: pre-line; }
-.fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; background: var(--accent); color: var(--on-accent); border-radius: 28px; padding: 14px 26px; font-weight: 700; font-size: 16px; box-shadow: 0 6px 16px #0008; z-index: 6; }
+.fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; background: var(--accent); color: var(--on-accent); border-radius: 28px; padding: 14px 26px; font-weight: 700; font-size: 16px; box-shadow: 0 6px 16px var(--shadow); z-index: 6; }
 
 /* Kayit sayfasi */
 .text-card { padding: 10px 14px 14px; margin-bottom: 12px; }
@@ -150,7 +177,7 @@ textarea.field.ar { font-size: 20px; }
 .flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .55s; z-index: 30; }
 
 /* Pencere ve alt panel */
-.overlay { position: fixed; inset: 0; background: #0009; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.overlay { position: fixed; inset: 0; background: var(--scrim); z-index: 40; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .overlay.bottom { align-items: flex-end; padding: 0; }
 .dialog { background: var(--elevated); border-radius: 20px; width: 100%; max-width: 420px; max-height: 86dvh; overflow-y: auto; padding: 18px 18px 10px; }
 .dialog h2 { font-size: 18px; margin-bottom: 12px; }
@@ -159,7 +186,7 @@ textarea.field.ar { font-size: 20px; }
 .dialog .actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 .dialog .actions button { padding: 10px 14px; font-weight: 700; border-radius: 10px; }
 .dialog .actions .ok { color: var(--accent); }
-.dialog .actions .danger { color: #E8746A; }
+.dialog .actions .danger { color: var(--danger); }
 .dialog .actions .cancel { color: var(--text2); }
 .sheet { background: var(--elevated); border-radius: 24px 24px 0 0; width: 100%; max-width: 560px; padding: 10px 16px 20px; max-height: 90dvh; overflow-y: auto; }
 .grip { width: 40px; height: 4px; border-radius: 2px; background: var(--stroke-strong); margin: 0 auto 12px; }
@@ -172,7 +199,7 @@ textarea.field.ar { font-size: 20px; }
 .icons { display: flex; gap: 4px; flex-wrap: wrap; }
 .icons { gap: 6px; }
 .icons button { width: 46px; height: 46px; font-size: 26px; border-radius: 12px; border: 2px solid transparent; }
-.toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #2b3350; color: var(--text); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; max-width: 90%; text-align: center; box-shadow: 0 4px 14px #0008; }
+.toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: var(--toast); color: var(--toast-text); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; max-width: 90%; text-align: center; box-shadow: 0 4px 14px var(--shadow); }
 
 /* Vird rutini (ana ekran) */
 :root { --paper: #F4EBD6; --ink: #2B2111; --ink2: #4A3B20; --rule: #D8C9A6; }

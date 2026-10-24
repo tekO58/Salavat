@@ -5,10 +5,24 @@
 
 /* ================================================================ veri */
 
+/** Renk temalari: koyu "Gece zumrudu" (varsayilan) ve acik "Gunduz". style.css'teki
+ *  degiskenlerle ayni; JS'te renk karistirmak (mix) ve SVG icin gerekir. */
+const THEMES = {
+  dark: { bg: '#0A1414', card: '#111F1E', stroke: '#1F3633', text: '#EEF5F1', text2: '#A9C2BA', accent: '#2FC495', success: '#5FD39A', zikir: '#E2B65C', dua: '#7DB8E8' },
+  light: { bg: '#F3F5F7', card: '#FFFFFF', stroke: '#DDE3EA', text: '#16202C', text2: '#4A5868', accent: '#0F8F6E', success: '#1F9D5C', zikir: '#B7791F', dua: '#2B6CB0' }
+};
+const T = () => THEMES[state.theme] || THEMES.dark;
+function applyTheme() {
+  document.documentElement.dataset.theme = state.theme === 'light' ? 'light' : 'dark';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', T().bg);
+}
+
+// Hazir bolumlerin rengi temadan gelir.
 const SECTIONS = [
-  { id: 'salavat', name: 'Salavat', icon: '📿', color: '#E8B34A', target: 100, hint: 'Sayaçlı · Arapça, okunuş, anlam', builtin: true },
-  { id: 'zikir', name: 'Zikirler', icon: '✨', color: '#72C98A', target: 100, hint: 'Sayaçlı · kısa metin', builtin: true },
-  { id: 'dua', name: 'Dualar', icon: '🤲', color: '#7FB2F0', target: 0, hint: 'Okuma sayfası · sayaç isteğe bağlı', builtin: true }
+  { id: 'salavat', name: 'Salavat', icon: '📿', get color() { return T().accent; }, target: 100, hint: 'Sayaçlı · Arapça, okunuş, anlam', builtin: true },
+  { id: 'zikir', name: 'Zikirler', icon: '✨', get color() { return T().zikir; }, target: 100, hint: 'Sayaçlı · kısa metin', builtin: true },
+  { id: 'dua', name: 'Dualar', icon: '🤲', get color() { return T().dua; }, target: 0, hint: 'Okuma sayfası · sayaç isteğe bağlı', builtin: true }
 ];
 const SECTION_ICONS = ['🌙', '✨', '🌹', '🕋', '🕌', '📖', '📿', '🤲', '🌟', '🌸', '🌿', '💧', '💚', '🕯️', '🌅', '🍃'];
 const SECTION_COLORS = ['#E39BD0', '#2DD4BF', '#F0A94B', '#A78BFA', '#E8746A', '#5B8DEF'];
@@ -26,7 +40,7 @@ let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null };
+  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null, theme: 'dark' };
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
@@ -207,10 +221,10 @@ function mix(hex, base, ratio) {
 }
 
 function chip(label, on, color, onclick) {
-  color = color || '#E8B34A';
+  color = color || T().accent;
   return h('button.chip' + (on ? '.on' : ''), {
     onclick,
-    style: on ? { background: color, borderColor: color } : { borderColor: mix(color, '#151D32', 0.45) }
+    style: on ? { background: color, borderColor: color } : { borderColor: mix(color, T().card, 0.45) }
   }, label);
 }
 
@@ -284,7 +298,7 @@ function askNewSection(onCreated) {
   const paint = () => {
     icons.replaceChildren(...SECTION_ICONS.map((ic) => h('button', {
       onclick: () => { icon = ic; paint(); },
-      style: ic === icon ? { borderColor: color, background: mix(color, '#151D32', 0.2) } : null
+      style: ic === icon ? { borderColor: color, background: mix(color, T().card, 0.2) } : null
     }, ic)));
     swatches.replaceChildren(...SECTION_COLORS.map((c) => h('button.swatch' + (c === color ? '.on' : ''), { style: { background: c }, onclick: () => { color = c; paint(); } })));
   };
@@ -415,7 +429,7 @@ function pickForRoutine(r, onAdded) {
       return h('button.list-row', { onclick: () => {
         o.remove();
         askRoutineTarget(e, e.target, (v) => { r.items.push({ entryId: e.id, target: v }); save(); toast(`${r.icon} ${r.name}: ${e.name} eklendi`); if (onAdded) onAdded(); });
-      } }, h('span.strip', { style: { background: s ? s.color : '#E8B34A' } }),
+      } }, h('span.strip', { style: { background: s ? s.color : T().accent } }),
         h('div.grow', null, h('div.nm', null, e.name), h('div.sub.sec', null, s ? s.name : '')));
     }));
   };
@@ -477,7 +491,7 @@ function routineSection() {
         h('div', { style: { fontSize: '20px', fontWeight: 700 } }, `${r.icon} ${r.name}`)),
         st.total ? h('span.sec', { style: { fontSize: '13px' } }, `${st.done} / ${st.total} tamam`) : null),
       chipsRow,
-      st.total ? h('div.rsegs', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? '#7FBF8C' : st.next === it ? '#E8B34A' : '#26314D' } }))) : null,
+      st.total ? h('div.rsegs', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? T().success : st.next === it ? T().accent : T().stroke } }))) : null,
       h('div.rlist', null, rows,
         h('button.radd', { onclick: () => pickForRoutine(r, paint) }, st.total ? '＋ Virde ekle' : `＋ ${r.name} vaktinde okuduklarını ekle`),
         st.total ? null : h('button.radd.template', { onclick: () => {
@@ -496,7 +510,7 @@ function routineSection() {
 
 function ring(progress, color) {
   const r = 26, c = 2 * Math.PI * r;
-  const svg = `<svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#26314D" stroke-width="7"/>` +
+  const svg = `<svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="${T().stroke}" stroke-width="7"/>` +
     `<circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(c * Math.min(1, progress)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 32 32)"/></svg>`;
   const el = h('div', { style: { flex: 'none', width: '64px', height: '64px' } });
   el.innerHTML = svg;
@@ -514,7 +528,7 @@ function home() {
     const td = items.reduce((n, e) => n + todayOf(e.id), 0);
     return h('button.tile', {
       onclick: () => go('#/s/' + s.id),
-      style: { background: `linear-gradient(160deg, ${mix(s.color, '#151D32', 0.16)}, #151D32 60%)`, borderColor: mix(s.color, '#151D32', 0.35) }
+      style: { background: `linear-gradient(160deg, ${mix(s.color, T().card, 0.16)}, ${T().card} 60%)`, borderColor: mix(s.color, T().card, 0.35) }
     }, h('span.ic', null, s.icon), h('span.nm', null, s.name), h('span.sec', { style: { fontSize: '12.5px' } }, `${items.length} kayıt`),
       h('span', { style: { fontSize: '12.5px', marginTop: '4px', color: s.color, fontWeight: 700 } }, 'Bugün ' + num(td)));
   });
@@ -526,12 +540,16 @@ function home() {
     h('div.hello', null,
       h('div.grow', null, h('div.muted', { style: { fontSize: '13px' } }, date.charAt(0).toLocaleUpperCase('tr') + date.slice(1)), h('h1', null, 'Esselâmü aleyküm')),
       h('button.icon-btn', { onclick: () => go('#/s/_all'), 'aria-label': 'Ara' }, '🔍'),
+      h('button.icon-btn', {
+        onclick: () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; save(); applyTheme(); render(); },
+        'aria-label': state.theme === 'light' ? 'Koyu tema' : 'Açık tema'
+      }, state.theme === 'light' ? '🌙' : '☀️'),
       h('button.plus', { onclick: addSheet, 'aria-label': 'Ekle' }, '+')),
     h('div.scroll', null,
       h('button.card.today', {
         style: { width: '100%', textAlign: 'left' },
         onclick: () => askNumber('Günlük hedef', 'Bütün bölümlerde günde kaç okuma?', goal, (v) => { state.goal = v; save(); render(); })
-      }, ring(today / goal, today >= goal ? '#7FBF8C' : '#E8B34A'),
+      }, ring(today / goal, today >= goal ? T().success : T().accent),
         h('div.grow', null, h('div.label', null, 'Bugün'),
           h('div', null, h('span.big', null, num(today)), h('span.sec', null, `  / ${num(goal)} günlük hedef`)),
           h('div.sec', { style: { fontSize: '12.5px' } },
@@ -586,7 +604,7 @@ function sectionPage(filter) {
     list.replaceChildren(...items.map((e) => {
       const s = sectionOf(e.section);
       return h('button.list-row', { onclick: () => go('#/e/' + e.id) },
-        h('span.strip', { style: { background: s ? s.color : '#E8B34A' } }),
+        h('span.strip', { style: { background: s ? s.color : T().accent } }),
         h('div.grow', null, h('div.nm', null, e.name), h('div.sub' + (e.arabic ? '.sec' : '.warn'), null, subLine(e, s, state.tasbih[e.id]))),
         e.arabic ? h('div.ar', null, e.arabic) : null);
     }));
@@ -667,7 +685,7 @@ function entryPage(id, params) {
       // Vird rutininde sayacsiz kalem: okuyunca "Okudum", siradakine gecer.
       ? h('div.bottom-bar', null,
         h('div.sec.ellipsis', { style: { fontSize: '13px' } }, routineSub),
-        h('button.primary', { onclick: () => { markRead(routine, e.id); vib(30); advanceRoutine(routine); }, style: { background: '#7FBF8C' } }, '✓ Okudum, sıradakine geç'))
+        h('button.primary', { onclick: () => { markRead(routine, e.id); vib(30); advanceRoutine(routine); }, style: { background: T().success } }, '✓ Okudum, sıradakine geç'))
       : h('div.bottom-bar', null, stats, targets,
         h('div.row', { style: { gap: '8px', marginTop: '10px' } },
           h('button.secondary', { onclick: () => addToRoutine(e), style: { padding: '14px 12px', flex: 'none' } }, '📅 Virde ekle'),
@@ -791,7 +809,7 @@ function pickMaterial(current, onPick) {
       icon.innerHTML = Rosary.preview(m);
       return h('button.mat-tile' + (on ? '.on' : ''), {
         onclick: () => { selected = m; paint(); }, 'aria-label': materialTitle(m), 'aria-pressed': String(on),
-        style: on ? { borderColor: m.accent, background: mix(m.accent, '#151D32', 0.12) } : null
+        style: on ? { borderColor: m.accent, background: mix(m.accent, T().card, 0.12) } : null
       }, icon, h('div.mat-name', null, m.label), m.detail ? h('div.muted', { style: { fontSize: '11px' } }, `(${m.detail})`) : null);
     }));
   };
@@ -820,12 +838,12 @@ function miniCounter(m, onTap) {
   }
   const el = h('button.mini', { onclick: onTap, 'aria-label': 'Say: +1' });
   el.innerHTML = `<svg viewBox="0 0 ${S} ${S}" aria-hidden="true">
-    <circle cx="${c}" cy="${c}" r="${pr + 3}" fill="#151D32"/>
-    <circle cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="#26314D" stroke-width="5"/>
-    <circle class="mini-arc" cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="${m.accent}" stroke-width="5" stroke-linecap="round" transform="rotate(-90 ${c} ${c})" stroke-dasharray="0 ${circ.toFixed(1)}"/>
+    <circle cx="${c}" cy="${c}" r="${pr + 3}" fill="${T().card}"/>
+    <circle cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="${T().stroke}" stroke-width="5"/>
+    <circle class="mini-arc" cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="${T().accent}" stroke-width="5" stroke-linecap="round" transform="rotate(-90 ${c} ${c})" stroke-dasharray="0 ${circ.toFixed(1)}"/>
     ${dots}
-    <text class="mini-cnt" x="${c}" y="${c + 6}" fill="#F2EFE6" font-size="22" font-weight="700" text-anchor="middle"></text>
-    <text class="mini-tgt" x="${c}" y="${c + 21}" fill="#AEB5CF" font-size="10" text-anchor="middle"></text>
+    <text class="mini-cnt" x="${c}" y="${c + 6}" fill="${T().text}" font-size="22" font-weight="700" text-anchor="middle"></text>
+    <text class="mini-tgt" x="${c}" y="${c + 21}" fill="${T().text2}" font-size="10" text-anchor="middle"></text>
   </svg>`;
   const arc = el.querySelector('.mini-arc'), cnt = el.querySelector('.mini-cnt'), tgt = el.querySelector('.mini-tgt');
   return {
@@ -845,9 +863,9 @@ function counterPage(id, params) {
   if (!e) { toast('Kayıt bulunamadı'); go('#/'); return; }
   const t = tasbihFor(e);
   state.last = id; save();
-  // Halka, +1 dugmesi ve yazilarin rengi tespihin materyalinden (workplanner'daki gibi).
+  // Halka, +1 dugmesi ve sekmeler uygulamanin vurgu renginde; boncuklar materyalden.
   const mat = materialOf(t);
-  const color = mat.accent;
+  const color = T().accent;
 
   const roundVal = h('div.val'), roundSub = h('div.sec', { style: { fontSize: '13px' } });
   const totalVal = h('div.val');
@@ -856,7 +874,7 @@ function counterPage(id, params) {
   // Tespih: sagdaki bosluktan asagi kaydir ya da dokun, bir boncuk (rosary.js).
   // Okuma modu (⧉ Küçült): tespih kucuk yuvarlak sayaca doner, metin ekrani kaplar.
   const readMode = !!state.readMode;
-  const rosary = readMode ? null : Rosary.create(mat, () => count());
+  const rosary = readMode ? null : Rosary.create(mat, () => count(), { accent: color });
   const stage = rosary ? h('div.stage', null, rosary.el) : null;
   // Okuma sayfasindaki balon surukleyince sayma yapmasin.
   let bubbleDragged = false;
@@ -865,7 +883,7 @@ function counterPage(id, params) {
   const routine = params && params.get('r') ? routineOf(params.get('r')) : null;
   const routineBar = () => {
     const st = routineStats(routine);
-    return h('div.rsegs.tight', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? '#7FBF8C' : it.entryId === id ? '#E8B34A' : '#26314D' } })));
+    return h('div.rsegs.tight', null, st.items.map((it) => h('span', { style: { background: itemDone(it) ? T().success : it.entryId === id ? T().accent : T().stroke } })));
   };
   const routineSub = () => {
     const st = routineStats(routine);
@@ -907,7 +925,7 @@ function counterPage(id, params) {
         // Kapaliyken dugmeye dokunmak pencereyi de acar.
         onclick: () => { if (folded) { state.open[key] = true; state.open.c_folded = false; } else state.open[key] = !isOn(key); save(); paintText(); },
         'aria-pressed': String(isOn(key)),
-        style: isOn(key) ? (folded ? { background: mix(color, '#151D32', 0.3), borderColor: color, color: '#F2EFE6' } : { background: color, borderColor: color }) : null
+        style: isOn(key) ? (folded ? { background: mix(color, T().card, 0.3), borderColor: color, color: T().text } : { background: color, borderColor: color }) : null
       }, label)));
     readerBody.hidden = folded || !shown.length;
     readerBody.replaceChildren(...shown.map(([key, label, text, cls], i) => h('div.rpart' + (i ? '.ruled' : ''), null,
@@ -921,7 +939,7 @@ function counterPage(id, params) {
     paintTime();
     if (rosary) {
       rosary.setProgress(t.count / t.target);
-      rosary.setCenter(num(t.count), '/ ' + num(t.target), isDone(t) ? 'Tamamlandı ✓' : e.name, isDone(t) ? '#7FBF8C' : color);
+      rosary.setCenter(num(t.count), '/ ' + num(t.target), isDone(t) ? 'Tamamlandı ✓' : e.name, isDone(t) ? T().success : color);
       rosary.setPulled(t.total, animated);
     }
     if (mini) mini.set(t.count, t.target, isDone(t), animated);
@@ -1174,4 +1192,5 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
     .map((e) => Object.assign({ section: 'salavat', target: 100, aka: '', arabic: '', reading: '', meaning: '', attribution: '', source: '', note: '' }, e, { user: false }));
 }).catch(() => toast('Hazır kayıtlar yüklenemedi')).finally(render);
 
+applyTheme();
 if (!EMBED && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
