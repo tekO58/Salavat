@@ -12,6 +12,22 @@ Salavat, zikir ve dua kütüphanesi ve tespih.
 
 Aşağıdaki ekran ve veri açıklamaları iki sürüm için de geçerli.
 
+### APK aşamasında yapılacaklar
+
+Web'de eklenip Android'e henüz taşınmayanlar:
+
+- Arapça / Okunuş / Anlam / Kaynak kartları açılır kapanır (seçim hatırlanır)
+- Tespih ekranında metin penceresi: üçü alt alta, açılır kapanır
+- Okuma modu (⧉ Küçült): tespih köşede yuvarlak sayaca döner, metin ekranı kaplar
+- Yeni bölüm için renkli emoji simgeler; Zikirler simgesi ✨
+- Tespih: büyütülmüş halka (0.35 / 0.45)
+- **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız
+  Android'de mümkün; `workplanner-app`'teki `TasbihFloatService` ve
+  `TasbihBubbleView` taşınacak
+
+Tespih görünümü (10 materyal), süre / kalan tahmini ve gerçekçi tespih Android'de
+zaten var (workplanner'dan kopyalanan `Tasbih*.kt`).
+
 ## Ekranlar
 
 Tasarım: "B + C" (görseller `docs/ui/`).
