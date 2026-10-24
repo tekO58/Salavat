@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
-  <!-- Android simgesiyle ayni: koyu zeminde altin hilal ve boncuk. -->
-  <path fill="#12172B" d="M0,0h108v108h-108z"/>
-  <path fill="#E8B34A" d="M60,26a28,28 0,1 0,22 45a22,22 0,1 1,-22 -45z"/>
-  <circle fill="#E8B34A" cx="74" cy="44" r="4"/>
+  <!-- Gece zumrudu: koyu yesil zeminde nane yesili hilal ve boncuk. -->
+  <path fill="#0A1414" d="M0,0h108v108h-108z"/>
+  <path fill="#2FC495" d="M60,26a28,28 0,1 0,22 45a22,22 0,1 1,-22 -45z"/>
+  <circle fill="#2FC495" cx="74" cy="44" r="4"/>
 </svg>

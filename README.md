@@ -27,7 +27,8 @@ Web'de eklenip Android'e henüz taşınmayanlar:
   sığar (Ses/Titreşim yuvarlak düğmede, TUR kartından hedef); kayıt başlığında Aa,
   alt çubukta 📅 Virde ekle; boş vakte hazır namaz tesbihatı; dokunma alanları en az 40 px
 - **Renkler**: koyu "Gece zümrüdü" (varsayılan) ve açık "Gündüz" teması, panoda ☀️/🌙 ile
-  değişir; +1, sekmeler ve tespih halkası vurgu renginde, boncuklar materyalden
+  değişir; +1, sekmeler ve tespih halkası vurgu renginde, boncuklar materyalden;
+  uygulama simgesi de yeni renklerde (yeşil hilal)
 - **Okuma sayfası** (mushaf): kâğıt zemin, Arapça / Okunuş / Anlam çipleri, sayfa
   sayfa çevirme, sürüklenebilir yuvarlak sayaç, Aa yazı boyutu
 - **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız
