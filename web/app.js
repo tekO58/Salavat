@@ -12,25 +12,8 @@ const SECTIONS = [
 ];
 const SECTION_ICONS = ['🌙', '✨', '🌹', '🕋', '🕌', '📖', '📿', '🤲', '🌟', '🌸', '🌿', '💧', '💚', '🕯️', '🌅', '🍃'];
 const SECTION_COLORS = ['#E39BD0', '#2DD4BF', '#F0A94B', '#A78BFA', '#E8746A', '#5B8DEF'];
-/*
- * Tespih materyalleri: workplanner-app'teki TasbihMaterial ile ayni adlar ve
- * renkler. light/base/dark govde tonlari, gloss parlaklik (0 mat..1 cam),
- * glow isik gecirgenligi (kehribar gibi), metal ara parcalar, accent halka,
- * +1 dugmesi ve yazilarin rengi.
- */
-const METALS = { gold: ['#FFF1B8', '#C99A3A', '#5E4210'], silver: ['#FFFFFF', '#A7ADB8', '#3B4049'], bronze: ['#F3C79A', '#9A6434', '#3E2410'] };
-const MATERIALS = [
-  { id: 'KUKA', label: 'Kuka', detail: 'doğal', desc: 'Doğal ahşap dokusu, mat ve sıcak.', light: '#B88458', base: '#6E4326', dark: '#2E1A0D', gloss: 0.18, glow: 0, metal: 'bronze', accent: '#C98E5A' },
-  { id: 'KEHRIBAR', label: 'Kehribar', detail: 'bal rengi', desc: 'Parlak, yarı saydam; ışığı içine alır.', light: '#FFE08A', base: '#E39A1E', dark: '#7A3E05', gloss: 0.85, glow: 0.75, metal: 'gold', accent: '#F2A93B' },
-  { id: 'TURUNCU_KEHRIBAR', label: 'Turuncu kehribar', detail: 'koyu bal', desc: 'Sıcak turuncu, yarı saydam ve parlak.', light: '#FFB27A', base: '#E0561C', dark: '#6E1E05', gloss: 0.85, glow: 0.65, metal: 'gold', accent: '#F07A2A' },
-  { id: 'YESIL', label: 'Yeşil akik', detail: 'doğal taş', desc: 'Doğal taş görünümü, parlak ve derin renk.', light: '#7FD9A0', base: '#1E7A45', dark: '#0A2E19', gloss: 0.75, glow: 0.2, metal: 'silver', accent: '#2FBF71' },
-  { id: 'SIYAH', label: 'Siyah', detail: 'oniks', desc: 'Derin siyah, ayna gibi parlak.', light: '#5A5F6B', base: '#15161A', dark: '#000000', gloss: 1, glow: 0, metal: 'silver', accent: '#A9B1C2' },
-  { id: 'LACIVERT', label: 'Lacivert', detail: 'parlak', desc: 'Koyu mavi, cam gibi parlak.', light: '#7FA4FF', base: '#1C3FA8', dark: '#07153F', gloss: 0.9, glow: 0.35, metal: 'silver', accent: '#5B84F0' },
-  { id: 'MOR', label: 'Mor', detail: 'ametist', desc: 'Ametist moru, yarı saydam kristal.', light: '#D6B4FF', base: '#7A3FC4', dark: '#2A0E4F', gloss: 0.85, glow: 0.5, metal: 'silver', accent: '#B08AF5' },
-  { id: 'KIRMIZI', label: 'Kırmızı', detail: 'akik', desc: 'Kırmızı akik, parlak ve derin.', light: '#FF9A8A', base: '#B5161E', dark: '#45050A', gloss: 0.8, glow: 0.4, metal: 'gold', accent: '#E8535A' },
-  { id: 'BEYAZ', label: 'Beyaz / krem', detail: 'howlit', desc: 'Kırık beyaz taş, ince gri damarlı.', light: '#FFFFFF', base: '#E6E1D6', dark: '#8E887C', gloss: 0.45, glow: 0, metal: 'gold', accent: '#EDE7DA' },
-  { id: 'TURKUAZ', label: 'Turkuaz', detail: 'doğal taş', desc: 'Doğal turkuaz, koyu damarlı, yarı mat.', light: '#9BF0EA', base: '#1AA6A0', dark: '#064A48', gloss: 0.4, glow: 0, metal: 'silver', accent: '#2EC4C0' }
-];
+// Tespih materyalleri ve cizimi rosary.js'te (Rosary.MATERIALS).
+const MATERIALS = Rosary.MATERIALS;
 /** Eski kayitlardaki (bead: 'kuka' ...) renk adindan materyal. */
 const LEGACY_BEAD = { kuka: 'KUKA', kehribar: 'KEHRIBAR', siyah: 'SIYAH', yesil: 'YESIL', lacivert: 'LACIVERT', beyaz: 'BEYAZ' };
 const materialOf = (t) => MATERIALS.find((m) => m.id === (t.material || LEGACY_BEAD[t.bead])) || MATERIALS[0];
@@ -584,76 +567,6 @@ function addPage(params) {
 
 /* --------------------------------------------------------------- tespih */
 
-/** 33 boncuk, 2 nisane ve imame; sayinca halka bir boncuk doner. */
-let svgUid = 0;
-/**
- * Materyalin boncuk, nisane ve imame cizimleri (<defs> icinde). Govde uc
- * tonlu, parlaklik ust soldaki isik lekesiyle, isik gecirgenligi alttan
- * gelen sicak parlamayla verilir. Donen: { defs, bead, nisane, imame } kimlikleri.
- */
-function materialDefs(m) {
-  const u = 'm' + (++svgUid);
-  const metal = METALS[m.metal] || METALS.silver;
-  const defs = `
-    <radialGradient id="${u}b" cx="38%" cy="32%" r="72%"><stop offset="0" stop-color="${m.light}"/><stop offset=".5" stop-color="${m.base}"/><stop offset="1" stop-color="${m.dark}"/></radialGradient>
-    <radialGradient id="${u}g" cx="58%" cy="72%" r="55%"><stop offset="0" stop-color="${m.light}" stop-opacity="${(m.glow * 0.75).toFixed(2)}"/><stop offset="1" stop-color="${m.light}" stop-opacity="0"/></radialGradient>
-    <radialGradient id="${u}m" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${metal[0]}"/><stop offset=".55" stop-color="${metal[1]}"/><stop offset="1" stop-color="${metal[2]}"/></radialGradient>
-    <symbol id="${u}bead" viewBox="-13 -13 26 26" overflow="visible">
-      <circle r="12.5" fill="url(#${u}b)" stroke="#0007" stroke-width=".8"/>
-      ${m.glow > 0 ? `<circle r="12" fill="url(#${u}g)"/>` : ''}
-      <ellipse cx="-4" cy="-5" rx="4.2" ry="2.8" fill="#fff" opacity="${(0.12 + m.gloss * 0.55).toFixed(2)}" transform="rotate(-30 -4 -5)"/>
-    </symbol>
-    <symbol id="${u}nis" viewBox="-8 -8 16 16" overflow="visible">
-      <circle r="7.5" fill="url(#${u}m)" stroke="#0007" stroke-width=".8"/>
-      <ellipse cx="-2.4" cy="-3" rx="2.4" ry="1.5" fill="#fff" opacity=".6"/>
-    </symbol>
-    <symbol id="${u}ima" viewBox="-10 -18 20 36" overflow="visible">
-      <ellipse rx="9" ry="16" fill="url(#${u}b)" stroke="#0007" stroke-width=".8"/>
-      ${m.glow > 0 ? `<ellipse rx="8.5" ry="15" fill="url(#${u}g)"/>` : ''}
-      <rect x="-5.5" y="-18" width="11" height="5" rx="2" fill="url(#${u}m)"/>
-      <ellipse cx="-3" cy="-7" rx="2.6" ry="5" fill="#fff" opacity="${(0.1 + m.gloss * 0.45).toFixed(2)}"/>
-    </symbol>`;
-  return { defs, bead: `#${u}bead`, nis: `#${u}nis`, ima: `#${u}ima` };
-}
-
-/** Kucuk tespih simgesi (gorunum secicisi): 18 boncuk ve imame. */
-function rosaryPreview(m) {
-  const d = materialDefs(m);
-  let out = '';
-  const n = 18, step = 360 / (n + 1);
-  for (let i = 0; i < n; i++) {
-    const a = (90 + step * (i + 1)) * Math.PI / 180;
-    out += `<use href="${d.bead}" x="${(50 + 30 * Math.cos(a) - 8).toFixed(1)}" y="${(42 + 30 * Math.sin(a) - 8).toFixed(1)}" width="16" height="16"/>`;
-  }
-  out += `<use href="${d.ima}" x="44" y="70" width="12" height="22"/>`;
-  return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>${d.defs}</defs>${out}</svg>`;
-}
-
-function rosarySvg(m) {
-  const N = 33, slots = N + 3, step = 360 / (slots + 2), R = 140, cx = 170, cy = 170;
-  const d = materialDefs(m);
-  let beads = '';
-  // Saga bir bosluk birakilir (cekme noktasi); dizi: imame, 11, nisane, 11, nisane, 11.
-  const order = ['imame'].concat(Array(11).fill('b'), ['n'], Array(11).fill('b'), ['n'], Array(11).fill('b'));
-  order.forEach((kind, i) => {
-    const deg = i * step + 15, a = deg * Math.PI / 180;
-    const x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
-    if (kind === 'b') beads += `<use href="${d.bead}" x="${(x - 13).toFixed(1)}" y="${(y - 13).toFixed(1)}" width="26" height="26"/>`;
-    else if (kind === 'n') beads += `<use href="${d.nis}" x="${(x - 8).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="16" height="16"/>`;
-    else beads += `<use href="${d.ima}" x="${(x - 10).toFixed(1)}" y="${(y - 18).toFixed(1)}" width="20" height="36" transform="rotate(${(deg + 90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
-  });
-  return { step, svg: `<svg viewBox="0 0 340 340" role="img" aria-label="Tespih">
-    <defs>${d.defs}</defs>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${m.dark}88" stroke-width="2"/>
-    <g class="ring">${beads}</g>
-    <circle cx="${cx}" cy="${cy}" r="98" fill="none" stroke="#26314D" stroke-width="7"/>
-    <circle class="arc" cx="${cx}" cy="${cy}" r="98" fill="none" stroke-width="7" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
-    <text class="cnt" x="${cx}" y="${cy - 4}" fill="#F2EFE6" font-size="54" font-weight="700" text-anchor="middle"></text>
-    <text class="tgt" x="${cx}" y="${cy + 24}" fill="#AEB5CF" font-size="17" text-anchor="middle"></text>
-    <text class="nm" x="${cx}" y="${cy + 50}" font-size="14" font-weight="700" text-anchor="middle"></text>
-  </svg>` };
-}
-
 /**
  * Tespih Gorunumu (workplanner'daki TasbihAppearancePicker): ustte buyuk
  * onizleme, altta 10 materyal; "Bu görünümü kullan" ile onPick.
@@ -666,14 +579,14 @@ function pickMaterial(current, onPick) {
   const grid = h('div.mat-grid');
   const use = h('button.primary', { onclick: () => { o.remove(); onPick(selected); } }, 'Bu görünümü kullan');
   const paint = () => {
-    preview.innerHTML = rosaryPreview(selected);
+    preview.innerHTML = Rosary.preview(selected);
     infoName.textContent = materialTitle(selected);
     infoDesc.textContent = selected.desc;
     use.style.background = selected.accent;
     grid.replaceChildren(...MATERIALS.map((m) => {
       const on = m.id === selected.id;
       const icon = h('div.mat-icon');
-      icon.innerHTML = rosaryPreview(m);
+      icon.innerHTML = Rosary.preview(m);
       return h('button.mat-tile' + (on ? '.on' : ''), {
         onclick: () => { selected = m; paint(); }, 'aria-label': materialTitle(m), 'aria-pressed': String(on),
         style: on ? { borderColor: m.accent, background: mix(m.accent, '#151D32', 0.12) } : null
@@ -700,17 +613,15 @@ function counterPage(id) {
   // Halka, +1 dugmesi ve yazilarin rengi tespihin materyalinden (workplanner'daki gibi).
   const mat = materialOf(t);
   const color = mat.accent;
-  const { svg, step } = rosarySvg(mat);
 
   const roundVal = h('div.val'), roundSub = h('div.sec', { style: { fontSize: '13px' } });
   const totalVal = h('div.val');
   // Sure: bu tur, kalan tahmini, hiz; altinda tamamlanan turlarin ozeti.
   const timeLine = h('div.sec', { style: { fontSize: '13px', textAlign: 'center', marginTop: '7px', whiteSpace: 'pre-line', fontVariantNumeric: 'tabular-nums' } });
   const ctLabel = h('div.label'), ctBody = h('div.body');
-  const stage = h('div.stage');
-  stage.innerHTML = svg;
-  const ringEl = stage.querySelector('.ring'), arc = stage.querySelector('.arc');
-  const cnt = stage.querySelector('.cnt'), tgt = stage.querySelector('.tgt'), nm = stage.querySelector('.nm');
+  // Tespih: sagdaki bosluktan asagi kaydir ya da dokun, bir boncuk (rosary.js).
+  const rosary = Rosary.create(mat, () => count());
+  const stage = h('div.stage', null, rosary.el);
   const soundVal = h('div.sec', { style: { fontSize: '12.5px' } }), vibVal = h('div.sec', { style: { fontSize: '12.5px' } });
   const flash = h('div.flash', { style: { background: color } });
   let shown = state.ctext;
@@ -744,20 +655,14 @@ function counterPage(id) {
     ctBody.scrollTop = 0;
   }
 
-  function paint() {
+  function paint(animated) {
     roundVal.textContent = num(t.rounds);
     roundSub.textContent = `${num(t.count)} / ${num(t.target)}`;
     totalVal.textContent = num(t.total);
     paintTime();
-    ringEl.style.transform = `rotate(${(t.total * step).toFixed(2)}deg)`;
-    ringEl.style.transformOrigin = '170px 170px';
-    const c = 2 * Math.PI * 98, p = Math.min(1, t.count / t.target);
-    arc.setAttribute('stroke', color);
-    arc.setAttribute('stroke-dasharray', `${(c * p).toFixed(1)} ${c.toFixed(1)}`);
-    cnt.textContent = num(t.count);
-    tgt.textContent = '/ ' + num(t.target);
-    nm.textContent = isDone(t) ? 'Tamamlandı ✓' : e.name.length > 28 ? e.name.substring(0, 27) + '…' : e.name;
-    nm.setAttribute('fill', isDone(t) ? '#7FBF8C' : color);
+    rosary.setProgress(t.count / t.target);
+    rosary.setCenter(num(t.count), '/ ' + num(t.target), isDone(t) ? 'Tamamlandı ✓' : e.name, isDone(t) ? '#7FBF8C' : color);
+    rosary.setPulled(t.total, animated);
     soundVal.textContent = t.sound ? 'Açık' : 'Kapalı';
     vibVal.textContent = t.every === 0 ? 'Kapalı' : t.every === 1 ? 'Her adette' : `Her ${t.every} adette`;
   }
@@ -784,7 +689,11 @@ function counterPage(id) {
 
   function count() {
     const ev = tap(id);
-    if (ev === 'blocked') { vib([30, 60, 30]); toast('Hedefe ulaşıldı. Yeniden başlamak için Sıfırla.'); return; }
+    if (ev === 'blocked') {
+      // Yarim cekilmis boncuk yerine geri donsun.
+      rosary.setPulled(t.total, true);
+      vib([30, 60, 30]); toast('Hedefe ulaşıldı. Yeniden başlamak için Sıfırla.'); return;
+    }
     if (ev === 'completed') {
       if (t.finish) vib([0, 700, 250, 700]);
       if (t.sound) beep(true);
@@ -793,17 +702,8 @@ function counterPage(id) {
       toast(t.onTarget === 'stop' ? 'Tamamlandı ✓' : 'Tur tamamlandı ✓');
     } else if (ev === 'milestone') { vib(t.every > 1 ? 60 : 25); if (t.sound) beep(false); }
     else if (t.sound) beep(false);
-    paint();
+    paint(true);
   }
-
-  // Tespihte asagi kaydir ya da dokun: bir boncuk.
-  let startY = null, pulled = false;
-  stage.addEventListener('pointerdown', (ev) => { startY = ev.clientY; pulled = false; });
-  stage.addEventListener('pointermove', (ev) => {
-    if (startY != null && !pulled && ev.clientY - startY > 36) { pulled = true; count(); }
-  });
-  stage.addEventListener('pointerup', () => { if (startY != null && !pulled) count(); startY = null; });
-  stage.addEventListener('pointercancel', () => { startY = null; });
 
   const reset = () => choose('Sıfırla · ' + e.name, [
     { label: 'Sayacı ve turu sıfırla  (toplam kalır)', fn: () => { TasbihCore.resetCounter(t); save(); paint(); toast('Sayaç sıfırlandı'); } },
@@ -843,7 +743,7 @@ function counterPage(id) {
     stage,
     t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
     h('div.round-btns', null,
-      h('button.round-btn', { onclick: () => { if (undo(id)) { vib(20); paint(); } else toast('Geri alınacak bir şey yok'); } }, '↶', h('small', null, 'Geri al')),
+      h('button.round-btn', { onclick: () => { if (undo(id)) { vib(20); paint(true); } else toast('Geri alınacak bir şey yok'); } }, '↶', h('small', null, 'Geri al')),
       h('button.round-btn', { onclick: reset }, '⟲', h('small', null, 'Sıfırla')),
       h('button.round-btn', { onclick: menu }, '⋮', h('small', null, 'Diğer'))),
     h('div.quick', null,

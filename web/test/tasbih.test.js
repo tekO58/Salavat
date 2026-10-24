@@ -65,6 +65,49 @@ const cases = {
   }
 };
 
+// Dizilis: workplanner'daki TasbihRosaryLayoutTest ile ayni kurallar.
+const L = T.Rosary;
+Object.assign(cases, {
+  'otuz uc boncuk, iki nisane, bir imame'() {
+    assert.strictEqual(L.STRING.filter((e) => e.isBead).length, 33);
+    assert.strictEqual(L.STRING.filter((e) => e.isImame).length, 1);
+    assert.strictEqual(L.STRING.filter((e) => !e.isBead && !e.isImame).length, 2);
+  },
+  'cekis sonu bir sonraki durumun basiyla ayni (ziplama yok)'() {
+    for (let k = 0; k < 33; k++) {
+      const end = new Map(L.positions(k, 1).map(([e, u]) => [e.bead, u]));
+      const next = new Map(L.positions(k + 1, 0).map(([e, u]) => [e.bead, u]));
+      for (const [bead, u] of end) {
+        const d = Math.abs(u - next.get(bead));
+        assert(Math.min(d, L.TOTAL - d) < 1e-3, `k=${k} boncuk=${bead}`);
+      }
+    }
+  },
+  'siradaki boncuk sirayla cekilir ve 33te basa doner'() {
+    for (let k = 0; k < 33; k++) assert.strictEqual(L.movingBead(k), (k % 33) + 1);
+    assert.deepStrictEqual(L.order(0), L.order(33));
+  },
+  'durgun halde bosluk bos, boncuklar ust uste binmez'() {
+    for (let k = 0; k < 33; k++) {
+      const ps = L.positions(k, 0).map((p) => p[1]).sort((a, b) => a - b);
+      assert(ps.every((u) => u < L.WIDTH));
+      for (let i = 1; i < ps.length; i++) assert(ps[i] - ps[i - 1] >= L.SEP_W - 1e-3);
+    }
+  },
+  'nisane ve imame boncukla birlikte gecer'() {
+    assert.strictEqual(L.chunkSize(L.order(0)), 2);
+    assert(L.order(0).slice(-2).some((e) => e.isImame));
+    assert.strictEqual(L.chunkSize(L.order(11)), 2);
+    assert.strictEqual(L.chunkSize(L.order(5)), 1);
+  },
+  'cekilen boncuk boslugu atlar'() {
+    const before = L.positions(4, 0).find((p) => p[0].bead === 5)[1];
+    const after = L.positions(4, 1).find((p) => p[0].bead === 5)[1];
+    assert(before > L.WIDTH - 1);
+    assert(after < 1);
+  }
+});
+
 let failed = 0;
 for (const [name, fn] of Object.entries(cases)) {
   try { fn(); console.log('✓', name); } catch (e) { failed++; console.log('✗', name, '\n ', e.message); }

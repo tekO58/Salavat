@@ -139,8 +139,61 @@
     Object.assign(t, { count: 0, rounds: 0, total: 0, roundMs: 0, lastTapAt: 0, lastRoundMs: 0, bestRoundMs: 0, timedRounds: 0, timedMs: 0, intervals: [] });
   }
 
+  /*
+   * 33'luk tespihin dizilisi (workplanner'daki TasbihRosaryLayout).
+   * Ipteki sira: imame, 11 boncuk, nisane, 11 boncuk, nisane, 11 boncuk.
+   * Imame de ipin parcasi, boncuklarla doner. Halkanin saginda sabit bir
+   * "cekme boslugu" var; siradaki boncuk cekilince boslugun altina gecer,
+   * digerleri bir boncuk kayar. Birim: bir boncugun ipte kapladigi yer = 1.
+   */
+  const BEADS = 33, BEAD_W = 1, SEP_W = 0.6, IMAME_W = 1.1, GAP_W = 2.2, IMAME = -2;
+  const el = (bead) => ({ bead, isBead: bead > 0, isImame: bead === IMAME, width: bead > 0 ? BEAD_W : bead === IMAME ? IMAME_W : SEP_W });
+  const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  const STRING = [el(IMAME)].concat(range(1, 11).map(el), [el(0)], range(12, 22).map(el), [el(-1)], range(23, 33).map(el));
+  const WIDTH = STRING.reduce((s, e) => s + e.width, 0);
+  const TOTAL = WIDTH + GAP_W;
+  const mod = (a, n) => ((a % n) + n) % n;
+
+  /** k boncuk cekilmisken boslugun alt ucundan saat yonunde dizilis; siradaki en sonda. */
+  function order(k) {
+    const pulled = mod(k, BEADS);
+    const last = pulled === 0 ? BEADS : pulled;
+    const start = STRING.findIndex((e) => e.bead === last);
+    return STRING.map((_, i) => STRING[mod(start - i, STRING.length)]);
+  }
+
+  /** Cekilecek parca: sondan ilk boncuga kadar (araya nisane/imame dusmusse o da gecer). */
+  function chunkSize(ord) {
+    let n = 0;
+    for (let i = ord.length - 1; i >= 0; i--) { n++; if (ord[i].isBead) break; }
+    return n;
+  }
+
+  /** k'dan k+1'e gecisin t aninda (0..1) her elemanin merkezi (bosluk sonundan birim). */
+  function positions(k, t) {
+    const ord = order(k), chunk = chunkSize(ord), stay = ord.length - chunk;
+    const chunkWidth = ord.slice(stay).reduce((s, e) => s + e.width, 0);
+    let u = 0;
+    return ord.map((e, i) => {
+      const center = u + e.width / 2;
+      u += e.width;
+      let pos;
+      if (i < stay) pos = center + t * chunkWidth;
+      else {
+        // Parca boslugu atlayip basa gecer.
+        const target = center - (WIDTH - chunkWidth) + TOTAL;
+        pos = center + t * (target - center);
+      }
+      return [e, pos % TOTAL];
+    });
+  }
+
+  const movingBead = (k) => order(k).filter((e) => e.isBead).pop().bead;
+
+  const Rosary = { BEADS, SEP_W, GAP_W, WIDTH, TOTAL, STRING, order, chunkSize, positions, movingBead };
+
   const api = {
-    DEFAULT_IDLE_MS, IDLE_OPTIONS, SPEED_MIN, idleLabel, gap, liveRoundMs, format, perBead, typicalIntervalMs,
+    Rosary, DEFAULT_IDLE_MS, IDLE_OPTIONS, SPEED_MIN, idleLabel, gap, liveRoundMs, format, perBead, typicalIntervalMs,
     perMinute, etaMs, approx, averageRoundMs, summary, isDone, normalizeTasbih, tap, undo, resetCounter, resetAll
   };
   if (typeof module !== 'undefined') module.exports = api;

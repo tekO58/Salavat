@@ -1,6 +1,6 @@
 // Cevrimdisi calisma: once onbellek, arkada agdan tazele (bir sonraki aciliste yeni surum).
 const CACHE = 'salavat-v1';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'parser.js', 'tasbih.js', 'salavat.json', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'parser.js', 'tasbih.js', 'rosary.js', 'salavat.json', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
