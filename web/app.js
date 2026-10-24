@@ -285,6 +285,26 @@ function addSheet() {
     opt('📋', 'Panodan yapıştır', 'Kopyaladığın metni otomatik ayırır', () => go('#/add?paste=1'), true)), true);
 }
 
+/**
+ * Acilir kapanir kart: basliga dokununca kapanir/acilir; secim (key) butun
+ * kayitlarda hatirlanir. plain: kart cercevesi yok (metin penceresinin icinde).
+ */
+function foldCard(key, label, body, plain) {
+  const el = h(plain ? 'div.fold.plain' : 'div.card.text-card.fold');
+  const chev = h('span.chev');
+  const head = h('button.fold-head', { onclick: () => { state.open[key] = state.open[key] === false; save(); paintFold(); } },
+    h('span.label', null, label), chev);
+  const paintFold = () => {
+    const open = state.open[key] !== false;
+    el.classList.toggle('closed', !open);
+    head.setAttribute('aria-expanded', String(open));
+    chev.textContent = open ? '▾' : '▸';
+  };
+  el.append(head, h('div.fold-body', null, body));
+  paintFold();
+  return el;
+}
+
 /* --------------------------------------------------------------- pano */
 
 function ring(progress, color) {
@@ -412,22 +432,7 @@ function entryPage(id) {
   };
 
   const card = (label, body) => h('div.card.text-card', null, h('div.label', null, label), body);
-  /** Acilir kapanir kart: basliga dokununca kapanir/acilir; secim butun kayitlarda hatirlanir. */
-  const fold = (key, label, body) => {
-    const el = h('div.card.text-card.fold');
-    const paintFold = () => {
-      const open = state.open[key] !== false;
-      el.classList.toggle('closed', !open);
-      head.setAttribute('aria-expanded', String(open));
-      chev.textContent = open ? '▾' : '▸';
-    };
-    const chev = h('span.chev');
-    const head = h('button.fold-head', { onclick: () => { state.open[key] = state.open[key] === false; save(); paintFold(); } },
-      h('span.label', null, label), chev);
-    el.append(head, h('div.fold-body', null, body));
-    paintFold();
-    return el;
-  };
+  const fold = (key, label, body) => foldCard(key, label, body);
   const origin = [e.attribution && 'Nispet: ' + e.attribution, e.source && 'Kaynak: ' + e.source, e.note].filter(Boolean).join('\n\n');
 
   const stats = h('div.sec.ellipsis', { style: { fontSize: '13px' } });
@@ -605,6 +610,39 @@ function pickMaterial(current, onPick) {
 
 let counterTicker = null;
 
+/**
+ * Okuma modundaki kucuk yuvarlak sayac (workplanner'daki balon gibi): ilerleme
+ * halkasi, materyal renginde boncuklar, ortada sayi. Dokununca +1.
+ */
+function miniCounter(m, onTap) {
+  const S = 100, c = 50, pr = 46, circ = 2 * Math.PI * pr;
+  let dots = '';
+  for (let i = 0; i < 12; i++) {
+    const a = (i * 30 - 90) * Math.PI / 180;
+    dots += `<circle cx="${(c + 36 * Math.cos(a)).toFixed(1)}" cy="${(c + 36 * Math.sin(a)).toFixed(1)}" r="4.2" fill="${m.base}" stroke="${m.light}" stroke-opacity=".5" stroke-width="1"/>`;
+  }
+  const el = h('button.mini', { onclick: onTap, 'aria-label': 'Say: +1' });
+  el.innerHTML = `<svg viewBox="0 0 ${S} ${S}" aria-hidden="true">
+    <circle cx="${c}" cy="${c}" r="${pr + 3}" fill="#151D32"/>
+    <circle cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="#26314D" stroke-width="5"/>
+    <circle class="mini-arc" cx="${c}" cy="${c}" r="${pr}" fill="none" stroke="${m.accent}" stroke-width="5" stroke-linecap="round" transform="rotate(-90 ${c} ${c})" stroke-dasharray="0 ${circ.toFixed(1)}"/>
+    ${dots}
+    <text class="mini-cnt" x="${c}" y="${c + 6}" fill="#F2EFE6" font-size="22" font-weight="700" text-anchor="middle"></text>
+    <text class="mini-tgt" x="${c}" y="${c + 21}" fill="#AEB5CF" font-size="10" text-anchor="middle"></text>
+  </svg>`;
+  const arc = el.querySelector('.mini-arc'), cnt = el.querySelector('.mini-cnt'), tgt = el.querySelector('.mini-tgt');
+  return {
+    el,
+    set(count, target, done, animated) {
+      cnt.textContent = num(count);
+      cnt.setAttribute('font-size', String(count >= 10000 ? 16 : count >= 1000 ? 19 : 22));
+      tgt.textContent = done ? 'Tamam ✓' : '/ ' + num(target);
+      arc.setAttribute('stroke-dasharray', `${(circ * Math.min(1, count / target)).toFixed(1)} ${circ.toFixed(1)}`);
+      if (animated) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+    }
+  };
+}
+
 function counterPage(id) {
   const e = entryOf(id);
   if (!e) { toast('Kayıt bulunamadı'); go('#/'); return; }
@@ -618,41 +656,32 @@ function counterPage(id) {
   const totalVal = h('div.val');
   // Sure: bu tur, kalan tahmini, hiz; altinda tamamlanan turlarin ozeti.
   const timeLine = h('div.sec', { style: { fontSize: '13px', textAlign: 'center', marginTop: '7px', whiteSpace: 'pre-line', fontVariantNumeric: 'tabular-nums' } });
-  const ctLabel = h('div.label'), ctBody = h('div.body');
   // Tespih: sagdaki bosluktan asagi kaydir ya da dokun, bir boncuk (rosary.js).
-  const rosary = Rosary.create(mat, () => count());
-  const stage = h('div.stage', null, rosary.el);
+  // Okuma modu (⧉ Küçült): tespih kucuk yuvarlak sayaca doner, metin ekrani kaplar.
+  const readMode = !!state.readMode;
+  const rosary = readMode ? null : Rosary.create(mat, () => count());
+  const stage = rosary ? h('div.stage', null, rosary.el) : null;
+  const mini = readMode ? miniCounter(mat, () => count()) : null;
   const soundVal = h('div.sec', { style: { fontSize: '12.5px' } }), vibVal = h('div.sec', { style: { fontSize: '12.5px' } });
   const flash = h('div.flash', { style: { background: color } });
-  let shown = state.ctext;
-  // Metin karti: sagdaki ok karti acar/kapatir; acikken karta dokunmak metni degistirir,
-  // kapaliyken acar. Secim butun kayitlarda hatirlanir.
-  const toggleText = () => { state.open.counter = state.open.counter === false; save(); paintText(); };
-  const ctChev = h('span.chev');
-  const ctToggle = h('button.ct-toggle', { onclick: (ev) => { ev.stopPropagation(); toggleText(); }, 'aria-label': 'Metni aç / kapat' }, ctChev);
-  const tapText = () => {
-    if (state.open.counter === false) { toggleText(); return; }
-    state.ctext = (shown + 1) % 3; save(); paintText();
-  };
-  const ctCard = h('div.card.ctext', {
-    role: 'button', tabindex: '0', onclick: tapText,
-    onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tapText(); } }
-  }, h('div.row', null, h('div.grow', null, ctLabel), ctToggle), ctBody);
-
+  /*
+   * Metin penceresi: Arapca, okunus ve anlam alt alta, her biri acilir kapanir;
+   * uzun metin pencerenin icinde kayar. Pencere de basligindan acilir kapanir.
+   * Okuma modunda hep acik ve ekranin geri kalanini kaplar.
+   */
+  const readerBody = h('div.reader-body');
+  const rdChev = h('span.chev');
+  const rdHead = h('button.reader-head', { onclick: () => { state.open.counter = state.open.counter === false; save(); paintText(); } },
+    h('span.label', null, 'Metin'), rdChev);
+  const reader = h('div.card.reader', null, readMode ? null : rdHead, readerBody);
   function paintText() {
-    const fields = [e.arabic, e.reading, e.meaning];
-    let mode = state.ctext;
-    for (let i = 0; i < 3 && !fields[mode]; i++) mode = (mode + 1) % 3;
-    shown = mode;
-    const open = state.open.counter !== false;
-    ctBody.hidden = !open;
-    ctChev.textContent = open ? '▾' : '▸';
-    ctToggle.setAttribute('aria-expanded', String(open));
-    ctLabel.textContent = ['Arapça', 'Okunuş', 'Anlam'][mode] + (open ? '  ·  dokun: değiştir' : '  ·  gizli');
-    ctBody.textContent = fields[mode] || '';
-    ctBody.className = 'body' + (mode === 0 ? ' ar' : '');
-    ctBody.style.fontSize = mode === 0 ? (state.ar * 0.8) + 'px' : (state.tx * 0.9) + 'px';
-    ctBody.scrollTop = 0;
+    const open = readMode || state.open.counter !== false;
+    readerBody.hidden = !open;
+    rdChev.textContent = open ? '▾' : '▸';
+    rdHead.setAttribute('aria-expanded', String(open));
+    const parts = [['arabic', 'Arapça', e.arabic, 'div.ar.arabic-text'], ['reading', 'Okunuşu', e.reading, 'div.reading-text'], ['meaning', 'Anlamı', e.meaning, 'div.meaning-text.sec']]
+      .filter((x) => x[2]).map(([key, label, text, cls]) => foldCard(key, label, h(cls, null, text), true));
+    readerBody.replaceChildren(...parts);
   }
 
   function paint(animated) {
@@ -660,9 +689,12 @@ function counterPage(id) {
     roundSub.textContent = `${num(t.count)} / ${num(t.target)}`;
     totalVal.textContent = num(t.total);
     paintTime();
-    rosary.setProgress(t.count / t.target);
-    rosary.setCenter(num(t.count), '/ ' + num(t.target), isDone(t) ? 'Tamamlandı ✓' : e.name, isDone(t) ? '#7FBF8C' : color);
-    rosary.setPulled(t.total, animated);
+    if (rosary) {
+      rosary.setProgress(t.count / t.target);
+      rosary.setCenter(num(t.count), '/ ' + num(t.target), isDone(t) ? 'Tamamlandı ✓' : e.name, isDone(t) ? '#7FBF8C' : color);
+      rosary.setPulled(t.total, animated);
+    }
+    if (mini) mini.set(t.count, t.target, isDone(t), animated);
     soundVal.textContent = t.sound ? 'Açık' : 'Kapalı';
     vibVal.textContent = t.every === 0 ? 'Kapalı' : t.every === 1 ? 'Her adette' : `Her ${t.every} adette`;
   }
@@ -691,7 +723,7 @@ function counterPage(id) {
     const ev = tap(id);
     if (ev === 'blocked') {
       // Yarim cekilmis boncuk yerine geri donsun.
-      rosary.setPulled(t.total, true);
+      if (rosary) rosary.setPulled(t.total, true);
       vib([30, 60, 30]); toast('Hedefe ulaşıldı. Yeniden başlamak için Sıfırla.'); return;
     }
     if (ev === 'completed') {
@@ -729,31 +761,49 @@ function counterPage(id) {
     } }
   ]);
 
-  app.replaceChildren(h('div.counter', null,
-    h('div.row', { style: { height: '44px' } },
-      h('button.icon-btn.back', { onclick: back }, '‹'),
-      h('div.grow.ellipsis', { style: { textAlign: 'center', fontSize: '20px', fontWeight: 700 } }, e.name),
-      h('button.icon-btn', { onclick: () => go('#/e/' + id), 'aria-label': 'Metnin tamamı' }, 'ℹ'),
-      h('button.icon-btn', { onclick: menu }, '⋮')),
-    h('div.stats', null,
-      h('div.card', null, h('div.label', null, 'Tur'), roundVal, roundSub),
-      h('div.card', null, h('div.label', null, 'Toplam'), totalVal, h('div.sec', { style: { fontSize: '13px' } }, 'adet'))),
-    timeLine,
-    ctCard,
-    stage,
-    t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
-    h('div.round-btns', null,
-      h('button.round-btn', { onclick: () => { if (undo(id)) { vib(20); paint(true); } else toast('Geri alınacak bir şey yok'); } }, '↶', h('small', null, 'Geri al')),
-      h('button.round-btn', { onclick: reset }, '⟲', h('small', null, 'Sıfırla')),
-      h('button.round-btn', { onclick: menu }, '⋮', h('small', null, 'Diğer'))),
-    h('div.quick', null,
-      h('button.card', { onclick: () => { t.sound = !t.sound; save(); paint(); if (t.sound) beep(false); } },
-        h('span', { style: { fontSize: '17px' } }, '🔊'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Ses'), soundVal), h('span.muted', null, '›')),
-      h('button.card', { onclick: pickEvery },
-        h('span', { style: { fontSize: '17px' } }, '📳'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Titreşim'), vibVal), h('span.muted', null, '›'))),
-    h('button.plus1', { onclick: count, style: { background: color, border: `1px solid ${mix(color, '#FFFFFF', 0.7)}` } },
-      h('b', null, '+1'), h('span', { style: { fontSize: '12.5px' } }, 'Dokun, say')),
-    flash));
+  const undoTap = () => { if (undo(id)) { vib(20); paint(true); } else toast('Geri alınacak bir şey yok'); };
+  const toggleRead = () => { state.readMode = !readMode; save(); render(); };
+  const header = h('div.row', { style: { height: '44px', flex: 'none' } },
+    h('button.icon-btn.back', { onclick: back }, '‹'),
+    h('div.grow.ellipsis', { style: { textAlign: 'center', fontSize: '20px', fontWeight: 700 } }, e.name),
+    h('button.icon-btn', { onclick: toggleRead, 'aria-label': readMode ? 'Tespihe dön' : 'Küçült: okuma modu', title: readMode ? 'Tespihe dön' : 'Küçült' }, readMode ? '📿' : '⧉'),
+    h('button.icon-btn', { onclick: menu }, '⋮'));
+
+  if (readMode) {
+    // Okuma modu: solda sayi ve sure, sagda yuvarlak sayac (dokun: +1); altta metin.
+    app.replaceChildren(h('div.counter.read', null,
+      header,
+      h('div.read-top', null,
+        h('div.card.grow.read-stats', null,
+          h('div.label', null, 'Tur · Toplam'),
+          h('div', null, roundVal, h('span.sec', null, ' tur  ·  '), totalVal, h('span.sec', null, ' adet')),
+          roundSub, timeLine),
+        h('div.mini-col', null, mini.el, h('button.mini-undo', { onclick: undoTap }, '↶ Geri al'))),
+      reader,
+      flash));
+  } else {
+    app.replaceChildren(h('div.counter', null,
+      header,
+      h('div.stats', null,
+        h('div.card', null, h('div.label', null, 'Tur'), roundVal, roundSub),
+        h('div.card', null, h('div.label', null, 'Toplam'), totalVal, h('div.sec', { style: { fontSize: '13px' } }, 'adet'))),
+      timeLine,
+      reader,
+      stage,
+      t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
+      h('div.round-btns', null,
+        h('button.round-btn', { onclick: undoTap }, '↶', h('small', null, 'Geri al')),
+        h('button.round-btn', { onclick: reset }, '⟲', h('small', null, 'Sıfırla')),
+        h('button.round-btn', { onclick: menu }, '⋮', h('small', null, 'Diğer'))),
+      h('div.quick', null,
+        h('button.card', { onclick: () => { t.sound = !t.sound; save(); paint(); if (t.sound) beep(false); } },
+          h('span', { style: { fontSize: '17px' } }, '🔊'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Ses'), soundVal), h('span.muted', null, '›')),
+        h('button.card', { onclick: pickEvery },
+          h('span', { style: { fontSize: '17px' } }, '📳'), h('div.grow', null, h('div', { style: { fontWeight: 700, fontSize: '14px' } }, 'Titreşim'), vibVal), h('span.muted', null, '›'))),
+      h('button.plus1', { onclick: count, style: { background: color, border: `1px solid ${mix(color, '#FFFFFF', 0.7)}` } },
+        h('b', null, '+1'), h('span', { style: { fontSize: '12.5px' } }, 'Dokun, say')),
+      flash));
+  }
   paintText();
   paint();
   keepAwake(true);
