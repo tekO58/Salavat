@@ -36,11 +36,13 @@ const EVERY_PRESETS = [0, 1, 10, 33, 99];
 const MAX_TARGET = 50000;
 const KEY = 'salavat.v1';
 
+const emptyState = () => ({ tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null, theme: 'dark', preview: 'arabic', backupAt: null });
+
 let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null, theme: 'dark', preview: 'arabic' };
+  const empty = emptyState();
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
@@ -563,7 +565,84 @@ function home() {
       h('div.label.mb8', null, 'Favoriler'),
       favs.length ? h('div.chips', null, favs.map((e) => chip('★ ' + e.name, false, (sectionOf(e.section) || {}).color, () => go('#/e/' + e.id))))
         : h('p.muted', { style: { fontSize: '13px' } }, 'Bir kaydın sayfasında ☆ işaretine dokun, buraya gelsin.'),
+      backupCard(),
       h('div.footer', null, 'Web sürümü · veriler bu tarayıcıda saklanır'))));
+}
+
+/* -------------------------------------------------------------- yedek */
+
+const hasData = () => state.entries.length > 0 || Object.values(state.tasbih).some((t) => t.total > 0) || state.routines.some((r) => r.items.length);
+
+/** Pano altinda: son yedegin tarihi; 7 gunden eskiyse uyari rengi. */
+function backupCard() {
+  const days = state.backupAt ? Math.floor((Date.now() - state.backupAt) / 86400000) : null;
+  const stale = hasData() && (days === null || days >= 7);
+  const when = days === null ? 'Henüz yedek alınmadı' : days === 0 ? 'Son yedek: bugün' : `Son yedek: ${days} gün önce`;
+  return h('button.card.backup' + (stale ? '.stale' : ''), { onclick: backupSheet },
+    h('span', { style: { fontSize: '22px' } }, '💾'),
+    h('div.grow', null, h('div', { style: { fontWeight: 700 } }, 'Yedekle / Geri yükle'),
+      h('div', { class: stale ? 'warn' : 'sec', style: { fontSize: '12.5px' } }, when)),
+    h('span.muted', null, '›'));
+}
+
+function backupSheet() {
+  let o;
+  const opt = (icon, title, hint, fn) => h('button.card.opt', { onclick: () => { o.remove(); fn(); } },
+    h('span.ic', null, icon), h('div.grow', null, h('div', { style: { fontWeight: 700 } }, title), h('div.sec', { style: { fontSize: '12.5px' } }, hint)),
+    h('span.muted', null, '›'));
+  o = overlay(h('div.sheet', null, h('div.grip'),
+    h('h2', { style: { fontSize: '18px', marginBottom: '4px' } }, 'Yedek'),
+    h('p.sec', { style: { fontSize: '13px', marginBottom: '14px' } }, 'Sayaçlar, eklediğin kayıtlar ve bölümler, vird listeleri, favoriler ve ayarlar tek dosyaya kaydedilir.'),
+    opt('📤', 'Yedeği kaydet', 'Dosyayı Drive\'a, WhatsApp\'a ya da telefona kaydet', exportBackup),
+    opt('📥', 'Yedekten geri yükle', 'Yedek dosyasını seç; buradaki verilerin yerini alır', importBackup)), true);
+}
+
+async function exportBackup() {
+  const at = Date.now();
+  const data = { app: 'salavat', v: 1, at: new Date(at).toISOString(), state: Object.assign({}, state, { backupAt: at }) };
+  const name = `salavat-yedek-${dayKey()}.json`;
+  const file = new File([JSON.stringify(data)], name, { type: 'application/json' });
+  const done = () => { state.backupAt = at; save(); render(); toast('Yedek kaydedildi'); };
+  // Telefonda paylasma menusu (Drive, WhatsApp, Dosyalar); olmazsa indirme.
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Salavat yedeği' });
+      done();
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  try {
+    const url = URL.createObjectURL(file);
+    const a = h('a', { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    done();
+  } catch (e) { toast('Yedek kaydedilemedi'); }
+}
+
+function importBackup() {
+  const input = h('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0];
+    input.remove();
+    if (!f) return;
+    f.text().then((text) => {
+      let data;
+      try { data = JSON.parse(text); } catch (e) { data = null; }
+      if (!data || data.app !== 'salavat' || !data.state || typeof data.state !== 'object') { toast('Bu dosya bir Salavat yedeği değil'); return; }
+      const when = data.at ? new Date(data.at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'tarihsiz';
+      confirmDlg('Yedekten geri yükle', `${when} tarihli yedek yüklensin mi? Buradaki sayaçlar, kayıtlar ve vird listeleri yedektekiyle değişir.`, 'Yükle', () => {
+        state = Object.assign(emptyState(), data.state);
+        if (!Array.isArray(state.routines)) state.routines = DEFAULT_ROUTINES.map((r) => Object.assign({ items: [] }, r));
+        save(); applyTheme(); render();
+        toast('Yedek yüklendi');
+      });
+    }).catch(() => toast('Dosya okunamadı'));
+  });
+  document.body.append(input);
+  input.click();
 }
 
 /* -------------------------------------------------------- bolum listesi */

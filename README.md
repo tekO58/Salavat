@@ -32,6 +32,9 @@ Web'de eklenip Android'e henüz taşınmayanlar:
 - **Kayıt paneli**: listede kayda dokununca alttan panel; Arapça / Okunuş / Türkçe ile oku
   (sayfa yalnız o metin açık gelir), Tespihle oku, Virde ekle, Favori. Listedeki önizleme
   son seçilen dilde
+- **Yedek**: panonun altında "Yedekle / Geri yükle"; bütün veri tek JSON dosyasına
+  (telefonda paylaş menüsü: Drive, WhatsApp, Dosyalar), dosyadan geri yükleme; 7 günden
+  eski yedekte uyarı rengi
 - **Okuma sayfası** (mushaf): kâğıt zemin, Arapça / Okunuş / Anlam çipleri, sayfa
   sayfa çevirme, sürüklenebilir yuvarlak sayaç, Aa yazı boyutu
 - **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız

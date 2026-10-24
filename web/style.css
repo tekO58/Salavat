@@ -268,3 +268,7 @@ textarea.field.ar { font-size: 20px; }
 .lang { padding: 14px 4px; text-align: center; min-height: 76px; }
 .lang.on { border-color: var(--accent); }
 .lang-ic { font-size: 22px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+
+/* Pano: yedek karti */
+.backup { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; margin-top: 22px; }
+.backup.stale { border-color: color-mix(in srgb, var(--warning) 55%, var(--stroke)); }
