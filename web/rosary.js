@@ -165,7 +165,8 @@
    */
   function create(m, onPull, opts) {
     const L = root.TasbihCore.Rosary;
-    const S = 340, cx = 170, cy = 170, ringR = S * 0.30, progR = S * 0.40;
+    // Halka workplanner'dakinden (0.30 / 0.40) biraz buyuk; imame puskulu kenardan tasabilir.
+    const S = 340, cx = 170, cy = 170, ringR = S * 0.35, progR = S * 0.45;
     const unitDeg = 360 / L.TOTAL;
     const beadD = 2 * ringR * Math.sin((unitDeg / 2) * Math.PI / 180) * 0.94;
     // Bosluk sagda, yataydan biraz asagida; bosluk sonu buradan baslar.
@@ -176,7 +177,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'rosary';
     const circ = 2 * Math.PI * progR;
-    wrap.innerHTML = `<svg viewBox="0 0 ${S} ${S}" role="img" aria-label="Tespih">
+    wrap.innerHTML = `<svg viewBox="0 0 ${S} ${S}" overflow="visible" role="img" aria-label="Tespih">
       <defs>${d.defs}</defs>
       <circle cx="${cx}" cy="${cy}" r="${progR}" fill="none" stroke="#26314D" stroke-width="${f(S * 0.022)}"/>
       <circle class="arc" cx="${cx}" cy="${cy}" r="${progR}" fill="none" stroke="${m.accent}" stroke-width="${f(S * 0.022)}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" stroke-dasharray="0 ${f(circ)}"/>
