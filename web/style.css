@@ -87,7 +87,7 @@ input, textarea { font: inherit; color: var(--text); }
 .fold-body { padding: 0 14px 14px; }
 .fold.closed .fold-head { padding-bottom: 12px; }
 .fold.closed .fold-body { display: none; }
-.arabic-text { font-size: var(--ar-size); line-height: 1.8; user-select: text; }
+.arabic-text { font-size: var(--ar-size); line-height: 1.8; user-select: text; white-space: pre-line; }
 .reading-text, .meaning-text { font-size: var(--tx-size); line-height: 1.4; user-select: text; white-space: pre-line; }
 .bottom-bar { position: sticky; bottom: 0; background: var(--field); padding: 10px 16px 16px; border-top: 1px solid var(--stroke); }
 .targets { display: flex; gap: 6px; margin-top: 8px; }
@@ -198,9 +198,10 @@ textarea.field.ar { font-size: 20px; }
 .pages { height: 100%; column-gap: 32px; column-fill: auto; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; color: var(--ink); }
 .pages::-webkit-scrollbar { display: none; }
 .p-part.ruled { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 10px; }
-.p-arabic { font-size: var(--ar-size); line-height: 2; color: var(--ink); }
-.p-reading { font-size: var(--tx-size); line-height: 1.55; color: var(--ink2); }
-.p-meaning { font-size: var(--tx-size); line-height: 1.55; color: var(--ink2); font-style: italic; }
+/* Satir sonlari korunur (100 satirlik salavatlar alt alta). */
+.p-arabic { font-size: var(--ar-size); line-height: 2; color: var(--ink); white-space: pre-line; }
+.p-reading { font-size: var(--tx-size); line-height: 1.55; color: var(--ink2); white-space: pre-line; }
+.p-meaning { font-size: var(--tx-size); line-height: 1.55; color: var(--ink2); font-style: italic; white-space: pre-line; }
 .bubble { position: absolute; right: 10px; bottom: 10px; z-index: 3; touch-action: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .55)); }
 .bubble .mini { width: 92px; height: 92px; }
 .read-bottom { flex: none; padding: 10px 2px 2px; }

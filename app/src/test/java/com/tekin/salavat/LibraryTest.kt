@@ -28,7 +28,8 @@ class LibraryTest {
         list.forEach { e ->
             assertTrue(e.id, e.section in sections)
             assertTrue(e.id, e.reading.isNotBlank())
-            assertTrue(e.id, e.meaning.isNotBlank())
+            // Anlam her kayitta yok (ornegin Iksir-i A'zam); okunus ya da anlamdan biri gerekli.
+            assertTrue(e.id, e.reading.isNotBlank() || e.meaning.isNotBlank())
             assertTrue(e.id, e.source.isNotBlank())
             assertTrue(e.id, e.arabic.any { PasteParser.isArabicChar(it) })
         }
