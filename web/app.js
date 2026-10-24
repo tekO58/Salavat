@@ -7,7 +7,7 @@
 
 const SECTIONS = [
   { id: 'salavat', name: 'Salavat', icon: '📿', color: '#E8B34A', target: 100, hint: 'Sayaçlı · Arapça, okunuş, anlam', builtin: true },
-  { id: 'zikir', name: 'Zikirler', icon: '✦', color: '#72C98A', target: 100, hint: 'Sayaçlı · kısa metin', builtin: true },
+  { id: 'zikir', name: 'Zikirler', icon: '✨', color: '#72C98A', target: 100, hint: 'Sayaçlı · kısa metin', builtin: true },
   { id: 'dua', name: 'Dualar', icon: '🤲', color: '#7FB2F0', target: 0, hint: 'Okuma sayfası · sayaç isteğe bağlı', builtin: true }
 ];
 const SECTION_ICONS = ['🌙', '✨', '🌹', '🕋', '🕌', '📖', '📿', '🤲', '🌟', '🌸', '🌿', '💧', '💚', '🕯️', '🌅', '🍃'];
