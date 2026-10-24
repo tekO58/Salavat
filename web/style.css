@@ -212,7 +212,10 @@ textarea.field.ar { font-size: 20px; }
 
 /* Tespih ekranı metin penceresi: Arapça · Okunuş · Türkçe düğmeleri yan yana */
 .reader-tabs { display: flex; align-items: center; gap: 6px; padding: 8px 10px 8px 14px; }
-.reader-tabs .label { flex: 1; margin: 0; }
+.rfold { flex: 1; display: flex; align-items: center; gap: 8px; align-self: stretch; text-align: left; padding: 0 4px 0 0; border-radius: 10px; min-width: 0; }
+.rfold .label { margin: 0; }
+.rfold .chev { font-size: 16px; }
+.rfold:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .rtab { padding: 7px 12px; border-radius: 16px; font-size: 13.5px; border: 1px solid var(--stroke-strong); background: var(--card); color: var(--text); }
 .rtab.on { color: var(--on-accent); font-weight: 700; }
 .rtab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

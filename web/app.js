@@ -887,13 +887,20 @@ function counterPage(id, params) {
     .filter((x) => x[2]);
   function paintText() {
     const isOn = (key) => state.open[key] === true;
-    readerTabs.replaceChildren(h('span.label', null, 'Metin'), ...textParts.map(([key, label]) => h('button.rtab' + (isOn(key) ? '.on' : ''), {
-      onclick: () => { state.open[key] = !isOn(key); save(); paintText(); },
-      'aria-pressed': String(isOn(key)),
-      style: isOn(key) ? { background: color, borderColor: color } : null
-    }, label)));
+    // "Metin" ve yanindaki ok: secimler kalir, yalniz pencere kapanir/acilir.
+    const folded = state.open.c_folded === true;
     const shown = textParts.filter(([key]) => isOn(key));
-    readerBody.hidden = !shown.length;
+    const toggleFold = () => { state.open.c_folded = !folded; save(); paintText(); };
+    readerTabs.replaceChildren(
+      h('button.rfold', { onclick: toggleFold, 'aria-expanded': String(!folded && shown.length > 0), 'aria-label': folded ? 'Metni aç' : 'Metni kapat' },
+        h('span.label', null, 'Metin'), h('span.chev', null, folded ? '▸' : '▾')),
+      ...textParts.map(([key, label]) => h('button.rtab' + (isOn(key) ? '.on' : ''), {
+        // Kapaliyken dugmeye dokunmak pencereyi de acar.
+        onclick: () => { if (folded) { state.open[key] = true; state.open.c_folded = false; } else state.open[key] = !isOn(key); save(); paintText(); },
+        'aria-pressed': String(isOn(key)),
+        style: isOn(key) ? (folded ? { background: mix(color, '#151D32', 0.3), borderColor: color, color: '#F2EFE6' } : { background: color, borderColor: color }) : null
+      }, label)));
+    readerBody.hidden = folded || !shown.length;
     readerBody.replaceChildren(...shown.map(([key, label, text, cls], i) => h('div.rpart' + (i ? '.ruled' : ''), null,
       shown.length > 1 ? h('div.label', { style: { marginBottom: '4px' } }, label) : null, h(cls, null, text))));
   }
