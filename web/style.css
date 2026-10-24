@@ -144,5 +144,6 @@ textarea.field.ar { font-size: 20px; }
 .swatch { width: 32px; height: 32px; border-radius: 16px; border: 3px solid transparent; }
 .swatch.on { border-color: var(--text); }
 .icons { display: flex; gap: 4px; flex-wrap: wrap; }
-.icons button { width: 40px; height: 40px; font-size: 20px; border-radius: 10px; border: 1px solid transparent; }
+.icons { gap: 6px; }
+.icons button { width: 46px; height: 46px; font-size: 26px; border-radius: 12px; border: 2px solid transparent; }
 .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #2b3350; color: var(--text); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; max-width: 90%; text-align: center; box-shadow: 0 4px 14px #0008; }

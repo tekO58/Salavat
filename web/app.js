@@ -10,7 +10,7 @@ const SECTIONS = [
   { id: 'zikir', name: 'Zikirler', icon: '✦', color: '#72C98A', target: 100, hint: 'Sayaçlı · kısa metin', builtin: true },
   { id: 'dua', name: 'Dualar', icon: '🤲', color: '#7FB2F0', target: 0, hint: 'Okuma sayfası · sayaç isteğe bağlı', builtin: true }
 ];
-const SECTION_ICONS = ['✧', '☾', '❀', '✺', '📖', '🕌', '⭐', '💧', '🌿', '🤍'];
+const SECTION_ICONS = ['🌙', '✨', '🌹', '🕋', '🕌', '📖', '📿', '🤲', '🌟', '🌸', '🌿', '💧', '💚', '🕯️', '🌅', '🍃'];
 const SECTION_COLORS = ['#E39BD0', '#2DD4BF', '#F0A94B', '#A78BFA', '#E8746A', '#5B8DEF'];
 /** Tespih boncuk renkleri (Android'deki materyallerin sade karsiligi). */
 const BEADS = [
@@ -186,6 +186,8 @@ const num = (n) => Number(n || 0).toLocaleString('tr-TR');
  * sayfa gecmisi bellekte tutulur.
  */
 const EMBED = !!window.SALAVAT_EMBED;
+// Buyuk harfli basliklarda Turkce İ/I (pencereler de sayfanin her yerinde Turkce sayilsin).
+document.documentElement.lang = 'tr';
 const stack = ['#/'];
 const route = () => (EMBED ? stack[stack.length - 1] : location.hash || '#/');
 function go(hash) {
