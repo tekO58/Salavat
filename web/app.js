@@ -879,18 +879,23 @@ function counterPage(id, params) {
    * Okuma modunda hep acik ve ekranin geri kalanini kaplar.
    */
   const readerBody = h('div.reader-body');
-  const rdChev = h('span.chev');
-  const rdHead = h('button.reader-head', { onclick: () => { state.open.counter = state.open.counter === false; save(); paintText(); } },
-    h('span.label', null, 'Metin'), rdChev);
-  const reader = h('div.card.reader', null, readMode ? null : rdHead, readerBody);
+  // Ustte yan yana dugmeler: Arapca · Okunus · Turkce. Her biri kendi bolumunu
+  // acar/kapatir (secim hatirlanir); hicbiri acik degilse pencere tek satir kalir.
+  const readerTabs = h('div.reader-tabs');
+  const reader = h('div.card.reader', null, readerTabs, readerBody);
+  const textParts = [['c_arabic', 'Arapça', e.arabic, 'div.ar.arabic-text'], ['c_reading', 'Okunuş', e.reading, 'div.reading-text'], ['c_meaning', 'Türkçe', e.meaning, 'div.meaning-text.sec']]
+    .filter((x) => x[2]);
   function paintText() {
-    const open = readMode || state.open.counter !== false;
-    readerBody.hidden = !open;
-    rdChev.textContent = open ? '▾' : '▸';
-    rdHead.setAttribute('aria-expanded', String(open));
-    const parts = [['arabic', 'Arapça', e.arabic, 'div.ar.arabic-text'], ['reading', 'Okunuşu', e.reading, 'div.reading-text'], ['meaning', 'Anlamı', e.meaning, 'div.meaning-text.sec']]
-      .filter((x) => x[2]).map(([key, label, text, cls]) => foldCard(key, label, h(cls, null, text), true));
-    readerBody.replaceChildren(...parts);
+    const isOn = (key) => state.open[key] === true;
+    readerTabs.replaceChildren(h('span.label', null, 'Metin'), ...textParts.map(([key, label]) => h('button.rtab' + (isOn(key) ? '.on' : ''), {
+      onclick: () => { state.open[key] = !isOn(key); save(); paintText(); },
+      'aria-pressed': String(isOn(key)),
+      style: isOn(key) ? { background: color, borderColor: color } : null
+    }, label)));
+    const shown = textParts.filter(([key]) => isOn(key));
+    readerBody.hidden = !shown.length;
+    readerBody.replaceChildren(...shown.map(([key, label, text, cls], i) => h('div.rpart' + (i ? '.ruled' : ''), null,
+      shown.length > 1 ? h('div.label', { style: { marginBottom: '4px' } }, label) : null, h(cls, null, text))));
   }
 
   function paint(animated) {
