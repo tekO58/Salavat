@@ -40,7 +40,7 @@ let builtin = [];
 let state = load();
 
 function load() {
-  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null, theme: 'dark' };
+  const empty = { tasbih: {}, days: {}, hist: {}, last: null, entries: [], sections: [], fav: [], goal: 300, ar: 26, tx: 16, ctext: 1, open: {}, idle: 30000, routines: null, readDone: {}, bubble: null, theme: 'dark', preview: 'arabic' };
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? Object.assign(empty, JSON.parse(raw)) : empty;
@@ -568,6 +568,56 @@ function home() {
 
 /* -------------------------------------------------------- bolum listesi */
 
+const LANGS = [
+  { key: 'arabic', label: 'Arapça', icon: 'ع' }, { key: 'reading', label: 'Okunuş', icon: 'Aa' }, { key: 'meaning', label: 'Türkçe', icon: '🇹🇷' }
+];
+
+/**
+ * Listede kayda dokununca alttan panel: Arapça / Okunuş / Türkçe ile oku (kayit
+ * sayfasi yalniz o metin acik gelir), tespihle oku, virde ekle, favori.
+ * Secilen dil listedeki onizlemenin de dili olur (state.preview).
+ */
+function entrySheet(e, onChange) {
+  let o;
+  const s = sectionOf(e.section), t = state.tasbih[e.id];
+  const langs = LANGS.filter((l) => e[l.key]);
+  const read = (key) => {
+    o.remove();
+    for (const l of LANGS) state.open[l.key] = l.key === key;
+    state.preview = key;
+    save();
+    go('#/e/' + e.id);
+  };
+  const opt = (icon, title, hint, fn) => h('button.card.opt', { onclick: () => { o.remove(); fn(); } },
+    h('span.ic', null, icon), h('div.grow', null, h('div', { style: { fontWeight: 700 } }, title), h('div.sec.ellipsis', { style: { fontSize: '12.5px' } }, hint)),
+    h('span.muted', null, '›'));
+  const fav = state.fav.includes(e.id);
+  const info = [s && `${s.icon} ${s.name}`, hasCounter(e) ? 'Hedef ' + num(t ? t.target : e.target) : 'Okuma sayfası', 'bugün ' + num(todayOf(e.id))].filter(Boolean).join(' · ');
+  o = overlay(h('div.sheet', null, h('div.grip'),
+    h('div', { style: { fontSize: '18px', fontWeight: 700 } }, e.name),
+    h('div.sec', { style: { fontSize: '13px', margin: '2px 0 14px' } }, info),
+    langs.length ? h('div.label.mb8', null, 'Oku') : null,
+    langs.length ? h('div.langs', { style: { gridTemplateColumns: `repeat(${langs.length}, minmax(0, 1fr))` } },
+      langs.map((l) => h('button.card.lang' + (state.preview === l.key ? '.on' : ''), { onclick: () => read(l.key) },
+        h('div.lang-ic', null, l.icon), h('div', { style: { fontWeight: 700, marginTop: '4px' } }, l.label)))) : null,
+    !e.arabic ? h('p.warn', { style: { fontSize: '12.5px', margin: '-4px 0 12px' } }, 'Arapça bekliyor') : null,
+    opt('📿', 'Tespihle oku', 'Sayaçla birlikte, metin üstte', () => { tasbihFor(e); go('#/c/' + e.id); }),
+    opt('📅', 'Virde ekle', 'Sabah, Öğle, İkindi, Akşam ya da Yatsı', () => addToRoutine(e)),
+    opt(fav ? '★' : '☆', fav ? 'Favorilerden çıkar' : 'Favorilere ekle', 'Panoda Favoriler altında görünür', () => {
+      state.fav = fav ? state.fav.filter((x) => x !== e.id) : state.fav.concat(e.id);
+      save(); toast(fav ? 'Favorilerden çıkarıldı' : 'Favorilere eklendi');
+      if (onChange) onChange();
+    })), true);
+}
+
+/** Listede satirin sagi: secili dilde metnin basi (yoksa digerleri). */
+function previewOf(e) {
+  const order = [state.preview].concat(LANGS.map((l) => l.key));
+  const key = order.find((k) => e[k]);
+  if (!key) return null;
+  return key === 'arabic' ? h('div.ar', null, e.arabic) : h('div.pv', null, e[key]);
+}
+
 function subLine(e, s, t) {
   const parts = [s ? s.name : ''];
   parts.push(t && t.total > 0 ? `${num(t.count)} / ${num(t.target)}` : hasCounter(e) ? 'Hedef ' + num(e.target) : 'Okuma');
@@ -603,10 +653,10 @@ function sectionPage(filter) {
     }
     list.replaceChildren(...items.map((e) => {
       const s = sectionOf(e.section);
-      return h('button.list-row', { onclick: () => go('#/e/' + e.id) },
+      return h('button.list-row', { onclick: () => entrySheet(e, renderList) },
         h('span.strip', { style: { background: s ? s.color : T().accent } }),
         h('div.grow', null, h('div.nm', null, e.name), h('div.sub' + (e.arabic ? '.sec' : '.warn'), null, subLine(e, s, state.tasbih[e.id]))),
-        e.arabic ? h('div.ar', null, e.arabic) : null);
+        previewOf(e));
     }));
   }
 

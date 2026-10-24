@@ -29,6 +29,9 @@ Web'de eklenip Android'e henüz taşınmayanlar:
 - **Renkler**: koyu "Gece zümrüdü" (varsayılan) ve açık "Gündüz" teması, panoda ☀️/🌙 ile
   değişir; +1, sekmeler ve tespih halkası vurgu renginde, boncuklar materyalden;
   uygulama simgesi de yeni renklerde (yeşil hilal)
+- **Kayıt paneli**: listede kayda dokununca alttan panel; Arapça / Okunuş / Türkçe ile oku
+  (sayfa yalnız o metin açık gelir), Tespihle oku, Virde ekle, Favori. Listedeki önizleme
+  son seçilen dilde
 - **Okuma sayfası** (mushaf): kâğıt zemin, Arapça / Okunuş / Anlam çipleri, sayfa
   sayfa çevirme, sürüklenebilir yuvarlak sayaç, Aa yazı boyutu
 - **Diğer uygulamaların üstünde tespih balonu** (bildirimden +1 ile): yalnız
