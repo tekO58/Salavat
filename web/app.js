@@ -16,6 +16,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = state.theme === 'light' ? 'light' : 'dark';
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', T().bg);
+  if (NATIVE) { try { NATIVE.setTheme(T().bg, state.theme === 'light'); } catch (e) {} }
 }
 
 // Hazir bolumlerin rengi temadan gelir.
@@ -118,19 +119,19 @@ const isDone = TasbihCore.isDone;
 /** Iki dokunus arasi bu sureyi asarsa sure duraklar. */
 const idleMs = () => (TasbihCore.IDLE_OPTIONS.includes(state.idle) ? state.idle : TasbihCore.DEFAULT_IDLE_MS);
 
-function addHist(id, delta) {
-  const day = dayKey();
+function addHist(id, delta, at) {
+  const day = dayKey(at ? new Date(at) : new Date());
   state.days[day] = Math.max(0, (state.days[day] || 0) + delta);
   state.hist[id] = state.hist[id] || {};
   state.hist[id][day] = Math.max(0, (state.hist[id][day] || 0) + delta);
 }
 
 /** Tek dokunus: 'blocked' | 'completed' | 'milestone' | 'counted' (Android: TasbihLogic.tap). */
-function tap(id) {
-  const ev = TasbihCore.tap(state.tasbih[id], Date.now(), idleMs());
+function tap(id, at) {
+  const ev = TasbihCore.tap(state.tasbih[id], at || Date.now(), idleMs());
   if (ev === 'blocked') return ev;
   state.last = id;
-  addHist(id, +1);
+  addHist(id, +1, at);
   save();
   return ev;
 }
@@ -144,7 +145,18 @@ function undo(id) {
 
 /* -------------------------------------------------------- geri bildirim */
 
-const vib = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+/**
+ * Android uygulamasinin icinde (APK, app/MainActivity) sayfaya verilen kopru:
+ * titresim, ekran acik, dosya kaydetme, pano, durum cubugu rengi ve tespih balonu.
+ * Tarayicida yok; o zaman web API'leri kullanilir.
+ */
+const NATIVE = window.SalavatAndroid || null;
+const vib = (p) => {
+  try {
+    if (NATIVE) NATIVE.vibrate(JSON.stringify(Array.isArray(p) ? p : [0, p]));
+    else if (navigator.vibrate) navigator.vibrate(p);
+  } catch (e) {}
+};
 let audio = null;
 function beep(finish) {
   try {
@@ -159,6 +171,7 @@ function beep(finish) {
 
 let wakeLock = null;
 async function keepAwake(on) {
+  if (NATIVE) { try { NATIVE.keepAwake(!!on); } catch (e) {} return; }
   try {
     if (on && 'wakeLock' in navigator && !wakeLock) wakeLock = await navigator.wakeLock.request('screen');
     if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
@@ -246,7 +259,7 @@ function overlay(content, bottom) {
 /** Secenek listesi. items: [{label, fn, on}] */
 function choose(title, items) {
   let o;
-  const opts = h('div.opts', null, items.map((it) => h('button' + (it.on ? '.on' : ''), { onclick: () => { o.remove(); it.fn(); } }, it.label)));
+  const opts = h('div.opts', null, items.filter(Boolean).map((it) => h('button' + (it.on ? '.on' : ''), { onclick: () => { o.remove(); it.fn(); } }, it.label)));
   o = overlay(h('div.dialog', null, h('h2', null, title), opts,
     h('div.actions', null, h('button.cancel', { onclick: () => o.remove() }, 'Vazgeç'))));
 }
@@ -566,7 +579,47 @@ function home() {
       favs.length ? h('div.chips', null, favs.map((e) => chip('★ ' + e.name, false, (sectionOf(e.section) || {}).color, () => go('#/e/' + e.id))))
         : h('p.muted', { style: { fontSize: '13px' } }, 'Bir kaydın sayfasında ☆ işaretine dokun, buraya gelsin.'),
       backupCard(),
-      h('div.footer', null, 'Web sürümü · veriler bu tarayıcıda saklanır'))));
+      h('div.footer', null, NATIVE ? `Android ${NATIVE.version()} · veriler bu telefonda saklanır` : 'Web sürümü · veriler bu tarayıcıda saklanır'))));
+}
+
+/* ------------------------------------------------- Android: geri, balon */
+
+/** Android geri tusu: acik pencere varsa kapatir, degilse bir sayfa geri; panoda false (uygulama kapanir). */
+function nativeBack() {
+  const layers = document.querySelectorAll('.overlay');
+  if (layers.length) { layers[layers.length - 1].remove(); return true; }
+  if (route() === '#/' || route() === '') return false;
+  back();
+  return true;
+}
+
+/**
+ * Tespih balonu (Android): diger uygulamalarin ustunde kucuk sayac ve bildirimde +1.
+ * Balon kendi sayar ve dokunuslarin zamanini saklar; uygulama one gelince
+ * bubbleSync bu dokunuslari ayni sayma kuraliyla (tap) buraya isler.
+ */
+function startBubble(e, t, mat) {
+  const th = T();
+  try {
+    NATIVE.startBubble(JSON.stringify({
+      id: e.id, name: e.name, count: t.count, target: t.target, onTarget: t.onTarget, every: t.every, finish: !!t.finish, sound: !!t.sound,
+      bg: th.card, stroke: th.stroke, text: th.text, text2: th.text2, accent: th.accent, bead: mat.base, beadLight: mat.light
+    }));
+  } catch (err) { toast('Balon açılamadı'); }
+}
+
+function bubbleUpdate(id, t) {
+  if (!NATIVE) return;
+  try { NATIVE.updateBubble(id, t.count, t.target); } catch (e) {}
+}
+
+function bubbleSync() {
+  if (!NATIVE) return;
+  let r = null;
+  try { r = JSON.parse(NATIVE.takeBubbleTaps() || 'null'); } catch (e) { r = null; }
+  if (!r || !r.id || !Array.isArray(r.taps) || !r.taps.length || !state.tasbih[r.id]) return;
+  for (const at of r.taps) tap(r.id, at);
+  if (route().startsWith('#/c/') || route() === '#/' || route() === '') render();
 }
 
 /* -------------------------------------------------------------- yedek */
@@ -603,6 +656,12 @@ async function exportBackup() {
   const name = `salavat-yedek-${dayKey()}.json`;
   const file = new File([JSON.stringify(data)], name, { type: 'application/json' });
   const done = () => { state.backupAt = at; save(); render(); toast('Yedek kaydedildi'); };
+  if (NATIVE) {
+    // Uygulama sonucu window.salavatSaved(true|false) ile bildirir.
+    window.salavatSaved = (ok) => { window.salavatSaved = null; if (ok) done(); else toast('Yedek kaydedilmedi'); };
+    try { NATIVE.saveFile(name, JSON.stringify(data)); } catch (e) { toast('Yedek kaydedilemedi'); }
+    return;
+  }
   // Telefonda paylasma menusu (Drive, WhatsApp, Dosyalar); olmazsa indirme.
   try {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -851,7 +910,7 @@ function addPage(params) {
   }
   async function fromClipboard() {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = NATIVE ? NATIVE.readClipboard() : await navigator.clipboard.readText();
       if (!text.trim()) throw new Error('bos');
       paste.value = text; split(text);
     } catch (e) {
@@ -1062,6 +1121,7 @@ function counterPage(id, params) {
   }
 
   function paint(animated) {
+    bubbleUpdate(id, t);
     roundVal.textContent = num(t.rounds);
     roundSub.textContent = `${num(t.count)} / ${num(t.target)}`;
     totalVal.textContent = num(t.total);
@@ -1138,6 +1198,7 @@ function counterPage(id, params) {
     { label: `⏸  Süre duraklaması: ${TasbihCore.idleLabel(idleMs())} ara verince`, fn: () => choose('Süre ne zaman duraklasın?', TasbihCore.IDLE_OPTIONS.map((ms) => ({
       label: `${TasbihCore.idleLabel(ms)} dokunulmazsa`, on: ms === idleMs(), fn: () => { state.idle = ms; save(); paint(); }
     }))) },
+    NATIVE ? { label: '🫧  Balon: diğer uygulamaların üstünde say', fn: () => startBubble(e, t, mat) } : null,
     { label: '🔄  Sıfırla', fn: reset },
     { label: '📈  Geçmiş', fn: () => {
       const days = Object.entries(state.hist[id] || {}).filter((d) => d[1] > 0).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30);
@@ -1320,4 +1381,10 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 }).catch(() => toast('Hazır kayıtlar yüklenemedi')).finally(render);
 
 applyTheme();
-if (!EMBED && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if (NATIVE) {
+  window.salavatBack = nativeBack;
+  window.salavatBubbleSync = bubbleSync;
+  window.salavatOpen = (id) => { bubbleSync(); go('#/c/' + id); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') bubbleSync(); });
+}
+if (!NATIVE && !EMBED && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

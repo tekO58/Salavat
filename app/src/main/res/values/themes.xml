@@ -1,22 +1,9 @@
 <resources>
-    <!-- Simdilik yalnizca koyu tema (renkler AppColors ile ayni). -->
-    <style name="Theme.Salavat" parent="Theme.MaterialComponents.NoActionBar">
-        <item name="colorPrimary">#E8B34A</item>
-        <item name="colorPrimaryDark">#12172B</item>
-        <item name="colorAccent">#E8B34A</item>
-        <item name="android:statusBarColor">#12172B</item>
-        <item name="android:navigationBarColor">#12172B</item>
-        <item name="android:windowBackground">@color/bg_app</item>
-        <item name="alertDialogTheme">@style/Theme.Salavat.Dialog</item>
-        <item name="android:alertDialogTheme">@style/Theme.Salavat.Dialog</item>
-    </style>
-
-    <style name="Theme.Salavat.Dialog" parent="Theme.MaterialComponents.Dialog.Alert">
-        <item name="colorPrimary">#E8B34A</item>
-        <item name="colorAccent">#E8B34A</item>
-        <item name="colorSurface">#1A2440</item>
-        <item name="android:colorBackgroundFloating">#1A2440</item>
-        <item name="android:textColorPrimary">#F2EFE6</item>
-        <item name="android:textColorSecondary">#AEB5CF</item>
+    <!-- Ekranlarin hepsi web uygulamasinda (WebView); bu yalnizca acilis zemini.
+         Durum cubugu rengini sayfa temaya gore degistirir (SalavatAndroid.setTheme). -->
+    <style name="Theme.Salavat" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0A1414</item>
+        <item name="android:navigationBarColor">#0A1414</item>
+        <item name="android:windowBackground">@drawable/splash</item>
     </style>
 </resources>

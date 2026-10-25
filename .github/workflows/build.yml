@@ -1,16 +1,17 @@
 name: Build APK
 
-# Android dosyalari degisince debug APK. APK depodaki sabit test anahtariyla
-# imzali (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
-# Yalnizca web/ ya da dokuman degisirse calismaz (web: pages.yml).
+# Debug APK. APK web uygulamasinin kabugu: web/ derlemede APK'nin icine
+# kopyalanir, bu yuzden web degisince de calisir. APK depodaki sabit test
+# anahtariyla imzali (app/debug.keystore): yeni APK telefondakinin uzerine kurulur.
+# Yalnizca dokuman degisirse calismaz.
 # Birim testleri her 10 kosuda bir (run_number 10'un kati) ya da
 # "Run workflow"da elle isaretlenirse; diger kosularda APK derlemesi
 # derleme hatasini yine yakalar.
 on:
   push:
-    paths-ignore: ['web/**', 'docs/**', 'README.md', '.github/workflows/pages.yml']
+    paths-ignore: ['docs/**', 'README.md', '.github/workflows/pages.yml']
   pull_request:
-    paths-ignore: ['web/**', 'docs/**', 'README.md', '.github/workflows/pages.yml']
+    paths-ignore: ['docs/**', 'README.md', '.github/workflows/pages.yml']
   workflow_dispatch:
     inputs:
       run_tests:
@@ -49,17 +50,13 @@ jobs:
             echo "Birim testleri atlandı (koşu #${{ github.run_number }}; her 10 koşuda bir ya da elle)."
           fi
 
-      - name: Robolectric önbelleği
-        if: ${{ steps.tests.outputs.run == 'true' }}
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository/org/robolectric
-          key: robolectric-${{ runner.os }}-${{ hashFiles('app/build.gradle') }}
-          restore-keys: robolectric-${{ runner.os }}-
-
       - name: Birim testleri
         if: ${{ steps.tests.outputs.run == 'true' }}
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: |
+          node web/test/parser.test.js
+          node web/test/tasbih.test.js
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --stacktrace
 
       - name: Test raporunu yükle
         if: ${{ failure() && steps.tests.outputs.run == 'true' }}

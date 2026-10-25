@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Tespih sayacinin dokunus titresimi. Normal izin; kullaniciya sorulmaz. -->
+    <!-- Tespih titresimi. Normal izin; kullaniciya sorulmaz. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Yazi tipi (Amiri) Google Fonts'tan; internet yoksa sistem yazisi. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Tespih balonu: diger uygulamalarin ustunde kucuk sayac. Yalnizca
+         kullanici tespih ekraninda "Balon" deyip izin verirse kullanilir. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Android 13+: balon acikken bildirimde sayac ve +1. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -11,23 +20,27 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Salavat">
 
+        <!-- Butun ekranlar web uygulamasi (web/ klasoru, APK'nin icinde). -->
         <activity
-            android:name=".HomeActivity"
-            android:exported="true">
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".SectionActivity" android:exported="false" />
-        <activity android:name=".EntryActivity" android:exported="false" />
-        <!-- adjustResize: klavye acilinca Kaydet dugmesi ustte kalsin. -->
-        <activity
-            android:name=".AddEntryActivity"
+        <!-- Tespih balonu ve bildirimi. Yalnizca tespih ekranindaki "Balon" ile baslar. -->
+        <service
+            android:name=".TasbihFloatService"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <activity android:name=".TasbihCounterActivity" android:exported="false" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Tespih sayaci: kullanicinin actigi yuzen sayma balonu" />
+        </service>
     </application>
 </manifest>

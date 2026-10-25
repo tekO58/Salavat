@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bildirim simgesi: beyaz hilal (sistem tek renk boyar). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M60,26a28,28 0,1 0,22 45a22,22 0,1 1,-22 -45z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M74,44m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>
