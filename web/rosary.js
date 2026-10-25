@@ -178,6 +178,13 @@
     const ns = 'http://www.w3.org/2000/svg';
     const wrap = document.createElement('div');
     wrap.className = 'rosary';
+    // Tespih alaninin tamami sayar; klavyede Enter / Bosluk da +1.
+    wrap.tabIndex = 0;
+    wrap.setAttribute('role', 'button');
+    wrap.setAttribute('aria-label', 'Tespih: dokun ya da aşağı kaydır, bir say');
+    wrap.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); onPull(); }
+    });
     const circ = 2 * Math.PI * progR;
     wrap.innerHTML = `<svg viewBox="0 0 ${S} ${S}" overflow="visible" role="img" aria-label="Tespih">
       <defs>${d.defs}</defs>

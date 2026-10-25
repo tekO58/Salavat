@@ -24,7 +24,8 @@ Web'de eklenip Android'e henüz taşınmayanlar:
 - **Vird rutini**: Sabah / Öğle / İkindi / Akşam / Yatsı listeleri, sırayla okuma,
   bitince sıradakine geçiş, sayaçsız kalemde "Okudum"; kayıt sayfasında 📅 Virde ekle
 - UX düzeltmeleri: Arapça · Okunuş · Türkçe adları her yerde aynı; tespih ekranı tek ekrana
-  sığar (Ses/Titreşim yuvarlak düğmede, TUR kartından hedef); kayıt başlığında Aa,
+  sığar (Ses/Titreşim yuvarlak düğmede, TUR kartından hedef; +1 düğmesi yok, tespih alanının
+  tamamına dokunmak sayar); kayıt başlığında Aa,
   alt çubukta 📅 Virde ekle; boş vakte hazır namaz tesbihatı; dokunma alanları en az 40 px
 - **Renkler**: koyu "Gece zümrüdü" (varsayılan) ve açık "Gündüz" teması, panoda ☀️/🌙 ile
   değişir; +1, sekmeler ve tespih halkası vurgu renginde, boncuklar materyalden;

@@ -1270,7 +1270,7 @@ function counterPage(id, params) {
       routine ? routineBar() : null,
       reader,
       stage,
-      t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Aşağı kaydır: bir boncuk çek  ·  dokunmak da sayar') : null,
+      t.total < 5 ? h('p.muted', { style: { textAlign: 'center', fontSize: '12.5px', marginBottom: '8px' } }, 'Tespihe dokun ya da aşağı kaydır: +1') : null,
       h('div.round-btns', null,
         h('button.round-btn', { onclick: undoTap }, '↶', h('small', null, 'Geri al')),
         h('button.round-btn', { onclick: reset }, '⟲', h('small', null, 'Sıfırla')),
@@ -1278,8 +1278,6 @@ function counterPage(id, params) {
         h('button.round-btn', { onclick: pickEvery, 'aria-label': 'Titreşim' }, '📳', vibVal),
         h('button.round-btn', { onclick: menu }, '⋮', h('small', null, 'Diğer'))),
       routine ? nextLine : null,
-      h('button.plus1', { onclick: count, style: { background: color, border: `1px solid ${mix(color, '#FFFFFF', 0.7)}` } },
-        h('b', null, '+1'), h('span', { style: { fontSize: '12.5px' } }, 'Dokun, say')),
       flash));
   }
   paintText();

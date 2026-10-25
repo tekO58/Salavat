@@ -155,17 +155,17 @@ textarea.field.ar { font-size: 20px; }
 @keyframes mini-pulse { 0% { transform: scale(.92); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .mini.pulse { animation: none; } }
 .mini-undo { font-size: 13px; color: var(--text2); min-height: 40px; padding: 8px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--stroke); }
-.stage { flex: 1 1 0; min-height: 150px; display: flex; align-items: center; justify-content: center; padding-block: 12px; touch-action: none; user-select: none; }
-.stage .rosary { height: 100%; }
+.stage { flex: 1 1 0; min-height: 150px; display: flex; align-items: stretch; justify-content: center; touch-action: none; user-select: none; }
+/* Tespihin cevresindeki bos alan da dokunmayi sayar (+1 dugmesi yok). */
+.stage .rosary { height: 100%; align-items: center; padding-block: 12px; }
+.stage .rosary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 16px; }
 .stage svg { height: 100%; width: auto; max-width: 100%; max-height: 480px; aspect-ratio: 1; }
 .rosary { display: flex; justify-content: center; width: 100%; touch-action: none; cursor: pointer; }
-.round-btns { display: flex; justify-content: space-between; gap: 6px; flex: none; }
+.round-btns { display: flex; justify-content: space-between; gap: 6px; flex: none; margin-bottom: 6px; }
 .round-btn { width: 62px; height: 62px; border-radius: 31px; flex: none; background: var(--card); border: 1px solid var(--stroke); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 19px; }
 .round-btn small { font-size: 10.5px; color: var(--text2); white-space: nowrap; }
 .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 .quick button { display: flex; align-items: center; gap: 9px; padding: 9px 8px 9px 12px; text-align: left; }
-.plus1 { flex: none; margin-top: 10px; border-radius: 18px; padding: 10px; color: var(--on-accent); text-align: center; width: 100%; }
-.plus1 b { font-size: 24px; display: block; }
 /* Tespih Gorunumu secicisi */
 .mat-sheet { background: var(--bg); width: 100%; max-width: 560px; height: 100dvh; display: flex; flex-direction: column; overflow-y: auto; }
 .mat-sheet .scroll { flex: 1; }
